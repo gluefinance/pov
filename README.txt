@@ -53,7 +53,7 @@ data or tables. It will only execute the minimum set of drop/create commands
 to carry out the rollback.
 
 snapshot will use SHA1 if the pgcrypto contrib package is available,
-otherwise the MD5 will be used as the hash algorithm.
+otherwise MD5 will be used as the hash algorithm.
 
 
 
