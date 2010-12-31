@@ -4,7 +4,7 @@ _RevisionID text;
 _SortedObjectIDs text[];
 BEGIN
 IF _ObjectIDs IS NULL THEN
-    RAISE EXCEPTION 'ERROR_SNAPSHOT_OBJECTIDS_IS_NULL';
+    RAISE EXCEPTION 'ERROR_FSNAPSHOT_OBJECTIDS_IS_NULL';
 END IF;
 _SortedObjectIDs := Sort_Array(_ObjectIDs);
 _RevisionID := Hash(_SortedObjectIDs);

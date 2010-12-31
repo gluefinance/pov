@@ -1,16 +1,16 @@
 -- This file contains the definition for the two API functions with same name but with different arguments.
 
-CREATE OR REPLACE FUNCTION snapshot(
+CREATE OR REPLACE FUNCTION fsnapshot(
 OUT _SnapshotID bigint,
 OUT _RevisionID text
 ) RETURNS RECORD AS $BODY$
--- Takes a new snapshot
+-- Takes a new fsnapshot
 -- Example:
--- SELECT snapshot();
+-- SELECT fsnapshot();
 DECLARE
 BEGIN
 
-SET LOCAL search_path TO snapshot;
+SET LOCAL search_path TO fsnapshot;
 
 -- Create new revision, unless it already exists, in which case the existing one will be returned.
 _RevisionID := New_Revision();
@@ -22,10 +22,10 @@ IF FOUND THEN
     RETURN;
 END IF;
 
--- Deactivate existing snapshot, if any. (might affect 0 rows, it's not a bug we lack IF NOT FOUND here)
+-- Deactivate existing fsnapshot, if any. (might affect 0 rows, it's not a bug we lack IF NOT FOUND here)
 UPDATE Snapshots SET Active = 0 WHERE Active = 1;
 
--- Create a new SnapshotID. The RevisionID might be identical to a previous snapshot.
+-- Create a new FSnapshotID. The RevisionID might be identical to a previous fsnapshot.
 INSERT INTO Snapshots (RevisionID) VALUES (_RevisionID) RETURNING SnapshotID INTO STRICT _SnapshotID;
 
 -- Return _SnapshotID and _RevisionID
@@ -37,21 +37,21 @@ $BODY$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 
 
-CREATE OR REPLACE FUNCTION snapshot(
+CREATE OR REPLACE FUNCTION fsnapshot(
 OUT _SnapshotID text,
 OUT _RevisionID text,
 _RestoreSnapshotID bigint
 ) RETURNS RECORD AS $BODY$
--- Rollback to given snapshot
+-- Rollback to given fsnapshot
 -- Example:
--- SELECT snapshot(1);
+-- SELECT fsnapshot(1);
 DECLARE
 _ObjectIDs text[];
 _FunctionID oid;
 _ObjectID text;
 _SQL text;
 
-_CurrentSnapshotID text;
+_CurrentFSnapshotID text;
 _CurrentRevisionID text;
 _CurrentObjectIDs text[];
 
@@ -66,21 +66,21 @@ SET check_function_bodies = false;
 
 SET LOCAL search_path TO public;
 
-SELECT * INTO STRICT _CurrentSnapshotID, _CurrentRevisionID FROM snapshot();
+SELECT * INTO STRICT _CurrentFSnapshotID, _CurrentRevisionID FROM fsnapshot();
 
-SET LOCAL search_path TO snapshot;
+SET LOCAL search_path TO fsnapshot;
 
 SELECT ObjectIDs INTO _CurrentObjectIDs FROM Revisions WHERE RevisionID = _CurrentRevisionID;
 IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERROR_SNAPSHOT_REVISION_NOT_FOUND RevisionID %', _CurrentRevisionID;
+    RAISE EXCEPTION 'ERROR_FSNAPSHOT_REVISION_NOT_FOUND RevisionID %', _CurrentRevisionID;
 END IF;
 
--- Lookup RevisionID and ObjectIDs for SnapshotID to restore
+-- Lookup RevisionID and ObjectIDs for FSnapshotID to restore
 SELECT Snapshots.RevisionID, Revisions.ObjectIDs INTO _RevisionID, _ObjectIDs FROM Snapshots
 INNER JOIN Revisions ON (Revisions.RevisionID = Snapshots.RevisionID)
 WHERE Snapshots.SnapshotID = _RestoreSnapshotID;
 IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERROR_SNAPSHOT_SNAPSHOT_NOT_FOUND SnapshotID %', _RestoreSnapshotID;
+    RAISE EXCEPTION 'ERROR_FSNAPSHOT_SNAPSHOT_NOT_FOUND FSnapshotID %', _RestoreSnapshotID;
 END IF;
 
 -- Drop objects not part of the revision.
@@ -117,10 +117,10 @@ END LOOP;
 
 SET LOCAL search_path TO public;
 
-SELECT * INTO STRICT _SnapshotID, _RestoredRevisionID FROM snapshot();
+SELECT * INTO STRICT _SnapshotID, _RestoredRevisionID FROM fsnapshot();
 
 IF _RevisionID <> _RestoredRevisionID THEN
-    RAISE EXCEPTION 'ERROR_SNAPSHOT_REVISION_DIFF RevisionID % RestoredRevisionID %', _RevisionID, _RestoredRevisionID;
+    RAISE EXCEPTION 'ERROR_FSNAPSHOT_REVISION_DIFF RevisionID % RestoredRevisionID %', _RevisionID, _RestoredRevisionID;
 END IF;
 
 -- Return new _SnapshotID and the restored _RevisionID.

@@ -1,12 +1,12 @@
 CREATE OR REPLACE VIEW view_snapshots AS
 SELECT
-    snapshot.Snapshots.SnapshotID,
-    snapshot.Revisions.RevisionID,
-    array_upper(snapshot.Revisions.ObjectIDs,1) AS NumObjects,
-    snapshot.Snapshots.Datestamp AS SnapshotAt,
-    snapshot.Revisions.Datestamp AS RevisionAt,
-    snapshot.Snapshots.Heartbeat,
-    snapshot.Snapshots.Active
-FROM snapshot.Snapshots
-INNER JOIN snapshot.Revisions ON (snapshot.Revisions.RevisionID = snapshot.Snapshots.RevisionID)
-ORDER BY snapshot.Snapshots.SnapshotID;
+    fsnapshot.Snapshots.SnapshotID,
+    fsnapshot.Revisions.RevisionID,
+    array_upper(fsnapshot.Revisions.ObjectIDs,1) AS NumObjects,
+    fsnapshot.Snapshots.Datestamp AS fsnapshotAt,
+    fsnapshot.Revisions.Datestamp AS RevisionAt,
+    fsnapshot.Snapshots.Heartbeat,
+    fsnapshot.Snapshots.Active
+FROM fsnapshot.Snapshots
+INNER JOIN fsnapshot.Revisions ON (fsnapshot.Revisions.RevisionID = fsnapshot.Snapshots.RevisionID)
+ORDER BY fsnapshot.Snapshots.SnapshotID;

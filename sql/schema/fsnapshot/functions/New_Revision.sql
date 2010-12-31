@@ -4,7 +4,7 @@ OUT _RevisionID text
 DECLARE
 BEGIN
 
-SET LOCAL search_path TO snapshot;
+SET LOCAL search_path TO fsnapshot;
 
 -- Create new RevisionID of collection of ObjectIDs.
 -- If a revision already exists with the same set of objects, its RevisionID will be selected.

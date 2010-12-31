@@ -45,14 +45,14 @@ Before reading any further, ask yourselves the following questions.
 
 INTRODUCTION
 
-snapshot can take a snapshot of all your database functions and objects
+fsnapshot can take a snapshot of all your database functions and objects
 depending on them, such as constraints and views using functions.
 
-snapshot can rollback to a previous snapshot without modifying any of your
+fsnapshot can rollback to a previous snapshot without modifying any of your
 data or tables. It will only execute the minimum set of drop/create commands
 to carry out the rollback.
 
-snapshot will use SHA1 if the pgcrypto contrib package is available,
+fsnapshot will use SHA1 if the pgcrypto contrib package is available,
 otherwise MD5 will be used as the hash algorithm.
 
 
@@ -85,7 +85,7 @@ SYNOPSIS
 
 -- 1. Take a snapshot.
 
-    postgres=# SELECT * FROM snapshot();
+    postgres=# SELECT * FROM fsnapshot();
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
                1 | 871ff0b837436ea1357814cdaa35a2013c63bd44
@@ -94,7 +94,7 @@ SYNOPSIS
 
 -- 2. Take a snapshot.
 
-    postgres=# SELECT * FROM snapshot();
+    postgres=# SELECT * FROM fsnapshot();
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
                1 | 871ff0b837436ea1357814cdaa35a2013c63bd44
@@ -118,16 +118,16 @@ SYNOPSIS
 
 -- 5. Take a snapshot.
 
-    postgres=# SELECT * FROM snapshot();
+    postgres=# SELECT * FROM fsnapshot();
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
                2 | 1e96cbf3da6aa5d648c837e6e910dfbe7f3eae18
     (1 row)
 
 
--- 4. Rollback to snapshot 1.
+-- 4. Rollback to fsnapshot 1.
 
-    postgres=# SELECT * FROM snapshot(1);
+    postgres=# SELECT * FROM fsnapshot(1);
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
      3           | 871ff0b837436ea1357814cdaa35a2013c63bd44
@@ -143,9 +143,9 @@ SYNOPSIS
     (0 rows)
 
 
--- 6. Rollback to snapshot 2.
+-- 6. Rollback to fsnapshot 2.
 
-    postgres=# SELECT * FROM snapshot(2);
+    postgres=# SELECT * FROM fsnapshot(2);
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
                4 | 1e96cbf3da6aa5d648c837e6e910dfbe7f3eae18
