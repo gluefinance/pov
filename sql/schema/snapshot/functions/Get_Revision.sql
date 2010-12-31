@@ -1,0 +1,11 @@
+CREATE OR REPLACE FUNCTION Get_Revision(_RevisionID bigint) RETURNS BIGINT[] AS $BODY$
+DECLARE
+_ObjectIDs bigint[];
+BEGIN
+SELECT ObjectIDs INTO _ObjectIDs FROM Revisions WHERE RevisionID = _RevisionID;
+IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERROR_REVISION_NOT_FOUND RevisionID %', _RevisionID;
+END IF;
+RETURN _ObjectIDs;
+END;
+$BODY$ LANGUAGE plpgsql STABLE;
