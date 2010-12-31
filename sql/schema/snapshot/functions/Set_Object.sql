@@ -10,7 +10,7 @@ END IF;
 -- Append the ObjectType to beginning of the Content
 _ObjectTypeContent := array_cat(ARRAY[_ObjectType], _Content);
 
-_ObjectID := SHA1(_ObjectTypeContent);
+_ObjectID := Hash(_ObjectTypeContent);
 
 PERFORM 1 FROM Objects WHERE ObjectID = _ObjectID;
 IF FOUND THEN

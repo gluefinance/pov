@@ -7,7 +7,7 @@ IF _ObjectIDs IS NULL THEN
     RAISE EXCEPTION 'ERROR_SNAPSHOT_OBJECTIDS_IS_NULL';
 END IF;
 _SortedObjectIDs := Sort_Array(_ObjectIDs);
-_RevisionID := SHA1(_SortedObjectIDs);
+_RevisionID := Hash(_SortedObjectIDs);
 PERFORM 1 FROM Revisions WHERE RevisionID = _RevisionID;
 IF FOUND THEN
     RETURN _RevisionID;

@@ -52,7 +52,8 @@ snapshot can rollback to a previous snapshot without modifying any of your
 data or tables. It will only execute the minimum set of drop/create commands
 to carry out the rollback.
 
-snapshot depends on the pgcrypto contrib package.
+snapshot will use SHA1 if the pgcrypto contrib package is available,
+otherwise the MD5 will be used as the hash algorithm.
 
 
 
@@ -62,7 +63,7 @@ object type     objects of the same type are created and dropped the same way,
                 i.e. they use the same functions to build proper create and
                 drop SQL-commands.
 
-object          is of an object type and has a SHA1 hash of its content
+object          is of an object type and has a hash of its content
                 consisting of two SQL-commands, one to create and another to
                 drop the object.
 

@@ -14,7 +14,7 @@ SET LOCAL search_path TO snapshot;
 \i schema/snapshot/functions/New_Revision.sql
 \i schema/snapshot/functions/Set_Object.sql
 \i schema/snapshot/functions/Set_Revision.sql
-\i schema/snapshot/functions/SHA1.sql
+\i schema/snapshot/functions/Hash.sql
 \i schema/snapshot/functions/Sort_Array.sql
 
 COMMIT;

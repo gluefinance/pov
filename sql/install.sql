@@ -1,7 +1,7 @@
 -- Users belonging to the snapshot_group group will have access to the functions in the schema/public/functions/ directory
 CREATE GROUP snapshot_group;
 
--- When a user of the snapshot_group group executes snapshot() or snapshot([SHA1 hash]::text),
+-- When a user of the snapshot_group group executes snapshot() or snapshot([hash]::text),
 -- it is executed as the snapshot user.
 -- The snapshot user has the necessary superuser access to create/drop objects.
 CREATE USER snapshot WITH SUPERUSER;
@@ -37,7 +37,7 @@ SET LOCAL search_path TO snapshot;
 \i schema/snapshot/functions/New_Revision.sql
 \i schema/snapshot/functions/Set_Object.sql
 \i schema/snapshot/functions/Set_Revision.sql
-\i schema/snapshot/functions/SHA1.sql
+\i schema/snapshot/functions/Hash.sql
 \i schema/snapshot/functions/Sort_Array.sql
 
 -- Internal views
