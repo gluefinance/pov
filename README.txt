@@ -85,18 +85,18 @@ SYNOPSIS
 -- 1. Take a snapshot.
 
     postgres=# SELECT * FROM snapshot();
-     _snapshotid | _revisionid 
-    -------------+-------------
-               1 |           1
+     _snapshotid |               _revisionid                
+    -------------+------------------------------------------
+               1 | 871ff0b837436ea1357814cdaa35a2013c63bd44
     (1 row)
 
 
 -- 2. Take a snapshot.
 
     postgres=# SELECT * FROM snapshot();
-     _snapshotid | _revisionid 
-    -------------+-------------
-               1 |           1
+     _snapshotid |               _revisionid                
+    -------------+------------------------------------------
+               1 | 871ff0b837436ea1357814cdaa35a2013c63bd44
     (1 row)
 
 
@@ -118,18 +118,18 @@ SYNOPSIS
 -- 5. Take a snapshot.
 
     postgres=# SELECT * FROM snapshot();
-     _snapshotid | _revisionid 
-    -------------+-------------
-               2 |           2
+     _snapshotid |               _revisionid                
+    -------------+------------------------------------------
+               2 | 1e96cbf3da6aa5d648c837e6e910dfbe7f3eae18
     (1 row)
 
 
 -- 4. Rollback to snapshot 1.
 
     postgres=# SELECT * FROM snapshot(1);
-     _snapshotid | _revisionid 
-    -------------+-------------
-               3 |           1
+     _snapshotid |               _revisionid                
+    -------------+------------------------------------------
+     3           | 871ff0b837436ea1357814cdaa35a2013c63bd44
     (1 row)
 
 
@@ -145,9 +145,9 @@ SYNOPSIS
 -- 6. Rollback to snapshot 2.
 
     postgres=# SELECT * FROM snapshot(2);
-     _snapshotid | _revisionid 
-    -------------+-------------
-               4 |           2
+     _snapshotid |               _revisionid                
+    -------------+------------------------------------------
+               4 | 1e96cbf3da6aa5d648c837e6e910dfbe7f3eae18
     (1 row)
 
 
