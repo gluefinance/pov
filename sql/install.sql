@@ -28,6 +28,9 @@ SET LOCAL search_path TO snapshot;
 \i schema/snapshot/tables/Revisions.sql
 \i schema/snapshot/tables/Snapshots.sql
 
+-- Populate control data
+\i data/ObjectTypes.sql
+
 -- Internal functions
 \i schema/snapshot/functions/Get_Object.sql
 \i schema/snapshot/functions/Get_Revision.sql
