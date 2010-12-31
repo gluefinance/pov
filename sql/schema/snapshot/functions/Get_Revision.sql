@@ -1,6 +1,6 @@
-CREATE OR REPLACE FUNCTION Get_Revision(_RevisionID bigint) RETURNS BIGINT[] AS $BODY$
+CREATE OR REPLACE FUNCTION Get_Revision(_RevisionID text) RETURNS TEXT[] AS $BODY$
 DECLARE
-_ObjectIDs bigint[];
+_ObjectIDs text[];
 BEGIN
 SELECT ObjectIDs INTO _ObjectIDs FROM Revisions WHERE RevisionID = _RevisionID;
 IF NOT FOUND THEN

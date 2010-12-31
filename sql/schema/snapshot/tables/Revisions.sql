@@ -1,7 +1,6 @@
-CREATE SEQUENCE seqRevisions;
 CREATE TABLE Revisions (
-RevisionID bigint not null default nextval('seqRevisions'),
-ObjectIDs bigint[] not null,
-Datestamp timestamptz not null default now(),
+RevisionID text        not null,
+ObjectIDs  text[]      not null,
+Datestamp  timestamptz not null default now(),
 PRIMARY KEY (RevisionID)
 );

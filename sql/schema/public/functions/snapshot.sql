@@ -2,7 +2,7 @@
 
 CREATE OR REPLACE FUNCTION snapshot(
 OUT _SnapshotID bigint,
-OUT _RevisionID bigint
+OUT _RevisionID text
 ) RETURNS RECORD AS $BODY$
 -- Takes a new snapshot
 -- Example:
@@ -18,6 +18,7 @@ _RevisionID := New_Revision();
 -- If unmodified, only update its heartbeat and return its SnapshotID.
 UPDATE Snapshots SET Heartbeat = now() WHERE Active = 1 AND RevisionID = _RevisionID RETURNING SnapshotID INTO _SnapshotID;
 IF FOUND THEN
+    SET LOCAL search_path TO DEFAULT;
     RETURN;
 END IF;
 
@@ -28,6 +29,7 @@ UPDATE Snapshots SET Active = 0 WHERE Active = 1;
 INSERT INTO Snapshots (RevisionID) VALUES (_RevisionID) RETURNING SnapshotID INTO STRICT _SnapshotID;
 
 -- Return _SnapshotID and _RevisionID
+SET LOCAL search_path TO DEFAULT;
 RETURN;
 
 END;
@@ -36,26 +38,26 @@ $BODY$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 
 CREATE OR REPLACE FUNCTION snapshot(
-OUT _SnapshotID bigint,
-OUT _RevisionID bigint,
+OUT _SnapshotID text,
+OUT _RevisionID text,
 _RestoreSnapshotID bigint
 ) RETURNS RECORD AS $BODY$
 -- Rollback to given snapshot
 -- Example:
 -- SELECT snapshot(1);
 DECLARE
-_ObjectIDs bigint[];
+_ObjectIDs text[];
 _FunctionID oid;
-_ObjectID bigint;
+_ObjectID text;
 _SQL text;
 
-_CurrentSnapshotID bigint;
-_CurrentRevisionID bigint;
-_CurrentObjectIDs bigint[];
+_CurrentSnapshotID text;
+_CurrentRevisionID text;
+_CurrentObjectIDs text[];
 
-_RestoredRevisionID bigint;
-_CREATE integer := 1;
-_DROP integer   := 2;
+_RestoredRevisionID text;
+_CREATE integer := 2;
+_DROP integer   := 3;
 BEGIN
 
 -- Disable check_function_bodies to allow creation of sql functions depending on not-yet-created functions,
@@ -88,8 +90,9 @@ SELECT DropObjects.ObjectID FROM (
     EXCEPT
     SELECT unnest AS ObjectID FROM unnest(_ObjectIDs)
 ) AS DropObjects
-INNER JOIN Objects ON (Objects.ObjectID = DropObjects.ObjectID)
-ORDER BY Objects.ObjectTypeID DESC
+INNER JOIN Objects     ON (Objects.ObjectID = DropObjects.ObjectID)
+INNER JOIN ObjectTypes ON (ObjectTypes.Name = Objects.Content[1])
+ORDER BY ObjectTypes.ObjectTypeID DESC
 LOOP
     RAISE DEBUG 'Drop ObjectID %', _ObjectID;
     SELECT Content[_DROP] INTO STRICT _SQL FROM Objects WHERE ObjectID = _ObjectID;
@@ -103,8 +106,9 @@ SELECT CreateObjects.ObjectID FROM (
     EXCEPT
     SELECT unnest AS ObjectID FROM unnest(_CurrentObjectIDs)
 ) AS CreateObjects
-INNER JOIN Objects ON (Objects.ObjectID = CreateObjects.ObjectID)
-ORDER BY Objects.ObjectTypeID ASC
+INNER JOIN Objects     ON (Objects.ObjectID = CreateObjects.ObjectID)
+INNER JOIN ObjectTypes ON (ObjectTypes.Name = Objects.Content[1])
+ORDER BY ObjectTypes.ObjectTypeID ASC
 LOOP
     RAISE DEBUG 'Create ObjectID %', _ObjectID;
     SELECT Content[_CREATE] INTO STRICT _SQL FROM Objects WHERE ObjectID = _ObjectID;
@@ -120,6 +124,7 @@ IF _RevisionID <> _RestoredRevisionID THEN
 END IF;
 
 -- Return new _SnapshotID and the restored _RevisionID.
+SET LOCAL search_path TO DEFAULT;
 RETURN;
 END;
 $BODY$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;

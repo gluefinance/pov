@@ -2,7 +2,7 @@ CREATE SEQUENCE seqSnapshots;
 
 CREATE TABLE Snapshots (
 SnapshotID  bigint      not null default nextval('seqSnapshots'),
-RevisionID  bigint      not null,
+RevisionID  text        not null,
 Datestamp   timestamptz not null default now(),
 Heartbeat   timestamptz not null default now(),
 Active      integer     not null default 1,

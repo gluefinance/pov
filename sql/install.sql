@@ -1,7 +1,7 @@
 -- Users belonging to the snapshot_group group will have access to the functions in the schema/public/functions/ directory
 CREATE GROUP snapshot_group;
 
--- When a user of the snapshot_group group executes snapshot() or snapshot(bigint),
+-- When a user of the snapshot_group group executes snapshot() or snapshot([SHA1 hash]::text),
 -- it is executed as the snapshot user.
 -- The snapshot user has the necessary superuser access to create/drop objects.
 CREATE USER snapshot WITH SUPERUSER;
