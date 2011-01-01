@@ -1,6 +1,6 @@
 DESCRIPTION
 
-Take a snapshot or rollback all your stored procedures in your PostgreSQL database.
+Take a snapshot or rollback all stored procedures in a PostgreSQL database.
 
 
 
@@ -18,8 +18,8 @@ Before reading any further, ask yourselves the following questions.
     If not, go to step 4.
 
 2.  During the minutes/hours while your malfunctional patch made a mess
-    in the production database, was there any user activity causing important
-    writes to the database?
+    in the production database, was there any user activity causing
+    important writes to the database?
     If so, go to step 3.
     If not, go to step 4.
 
