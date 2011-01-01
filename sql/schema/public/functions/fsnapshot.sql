@@ -38,7 +38,7 @@ $BODY$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 
 CREATE OR REPLACE FUNCTION fsnapshot(
-OUT _SnapshotID text,
+OUT _SnapshotID bigint,
 OUT _RevisionID text,
 _RestoreSnapshotID bigint
 ) RETURNS RECORD AS $BODY$
@@ -51,7 +51,7 @@ _FunctionID oid;
 _ObjectID text;
 _SQL text;
 
-_CurrentFSnapshotID text;
+_CurrentSnapshotID bigint;
 _CurrentRevisionID text;
 _CurrentObjectIDs text[];
 
@@ -66,7 +66,7 @@ SET check_function_bodies = false;
 
 SET LOCAL search_path TO public;
 
-SELECT * INTO STRICT _CurrentFSnapshotID, _CurrentRevisionID FROM fsnapshot();
+SELECT * INTO STRICT _CurrentSnapshotID, _CurrentRevisionID FROM fsnapshot();
 
 SET LOCAL search_path TO fsnapshot;
 
