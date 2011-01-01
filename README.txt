@@ -85,19 +85,19 @@ SYNOPSIS
 
 -- 1. Take a snapshot.
 
-    postgres=# SELECT * FROM fsnapshot();
+    test=# SELECT * FROM fsnapshot();
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
-               1 | 871ff0b837436ea1357814cdaa35a2013c63bd44
+               1 | 8ba39bf65949adc6b69aa356c29725cf06c77e26
     (1 row)
 
 
 -- 2. Take a snapshot.
 
-    postgres=# SELECT * FROM fsnapshot();
+    test=# SELECT * FROM fsnapshot();
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
-               1 | 871ff0b837436ea1357814cdaa35a2013c63bd44
+               1 | 8ba39bf65949adc6b69aa356c29725cf06c77e26
     (1 row)
 
 
@@ -106,9 +106,9 @@ SYNOPSIS
 
 -- 4. Modify your functions.
 
-    postgres=# CREATE FUNCTION myfunc() RETURNS VOID AS $$ $$ LANGUAGE sql;
+    test=# CREATE FUNCTION myfunc() RETURNS VOID AS $$ $$ LANGUAGE sql;
     CREATE FUNCTION
-    glue=# \df myfunc
+    test=# \df myfunc
                              List of functions
      Schema |  Name  | Result data type | Argument data types |  Type  
     --------+--------+------------------+---------------------+--------
@@ -118,19 +118,19 @@ SYNOPSIS
 
 -- 5. Take a snapshot.
 
-    postgres=# SELECT * FROM fsnapshot();
+    test=# SELECT * FROM fsnapshot();
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
-               2 | 1e96cbf3da6aa5d648c837e6e910dfbe7f3eae18
+               2 | 6c4c86015a45d9361889ce29908937b387e4dde0
     (1 row)
 
 
 -- 4. Rollback to fsnapshot 1.
 
-    postgres=# SELECT * FROM fsnapshot(1);
+    test=# SELECT * FROM fsnapshot(1);
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
-     3           | 871ff0b837436ea1357814cdaa35a2013c63bd44
+               3 | 8ba39bf65949adc6b69aa356c29725cf06c77e26
     (1 row)
 
 
@@ -145,10 +145,10 @@ SYNOPSIS
 
 -- 6. Rollback to fsnapshot 2.
 
-    postgres=# SELECT * FROM fsnapshot(2);
+    test=# SELECT * FROM fsnapshot(2);
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
-               4 | 1e96cbf3da6aa5d648c837e6e910dfbe7f3eae18
+               4 | 6c4c86015a45d9361889ce29908937b387e4dde0
     (1 row)
 
 
