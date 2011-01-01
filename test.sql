@@ -3,11 +3,11 @@ BEGIN;
 SET client_min_messages = 'debug';
 
 -- Test creating/dropping/restoring function
-SELECT * FROM fsnapshot(); -- 1
+SELECT * FROM fsnapshot(); -- Take snapshot #1
 CREATE FUNCTION myfunc() RETURNS VOID AS $$ $$ LANGUAGE sql;
 \df myfunc
-SELECT * FROM fsnapshot(); -- 2
-SELECT * FROM fsnapshot(1); -- 3
+SELECT * FROM fsnapshot(); -- Take snapshot #2
+SELECT * FROM fsnapshot(1); -- Rollback to snapshot #1, new snapshot #3
 \df myfunc
 
 -- Test creating/dropping/restoring function and the constraint which depends on it
@@ -15,23 +15,23 @@ CREATE FUNCTION mycheckfunc(int) RETURNS BOOLEAN AS $$ SELECT $1 > 1 $$ LANGUAGE
 CREATE TABLE mytable(id int, PRIMARY KEY(id), CHECK(mycheckfunc(id)));
 \df mycheckfunc
 \d mytable
-SELECT * FROM fsnapshot(); -- 4
-SELECT * FROM fsnapshot(3); -- 5
+SELECT * FROM fsnapshot(); -- Take snapshot #4
+SELECT * FROM fsnapshot(3); -- Rollback to snapshot #3, new snapshot #5
 \df mycheckfunc
 \d mytable
-SELECT * FROM fsnapshot(4); -- 6
+SELECT * FROM fsnapshot(4); -- Rollback to snapshot #4, new snapshot #6
 \df mycheckfunc
 \d mytable
 
 -- Test creating/dropping/restoring a view which depends on a function
 CREATE VIEW myview AS SELECT *, mycheckfunc(id) FROM mytable;
 \d myview
-SELECT * FROM fsnapshot(); -- 7
-SELECT * FROM fsnapshot(6); -- 8
+SELECT * FROM fsnapshot(); -- Take snapshot #7
+SELECT * FROM fsnapshot(6); -- Rollback to snapshot #6, new snapshot #8
 \d myview
 \df mycheckfunc
 \d mytable
-SELECT * FROM fsnapshot(7); -- 9
+SELECT * FROM fsnapshot(7); -- Take snapshot #9
 \d myview
 \df mycheckfunc
 \d mytable
