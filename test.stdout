@@ -1,0 +1,153 @@
+BEGIN
+SET
+ _snapshotid |               _revisionid                
+-------------+------------------------------------------
+           1 | 8ba39bf65949adc6b69aa356c29725cf06c77e26
+(1 row)
+
+CREATE FUNCTION
+                         List of functions
+ Schema |  Name  | Result data type | Argument data types |  Type  
+--------+--------+------------------+---------------------+--------
+ public | myfunc | void             |                     | normal
+(1 row)
+
+ _snapshotid |               _revisionid                
+-------------+------------------------------------------
+           2 | 6c4c86015a45d9361889ce29908937b387e4dde0
+(1 row)
+
+ _snapshotid |               _revisionid                
+-------------+------------------------------------------
+           3 | 8ba39bf65949adc6b69aa356c29725cf06c77e26
+(1 row)
+
+                       List of functions
+ Schema | Name | Result data type | Argument data types | Type 
+--------+------+------------------+---------------------+------
+(0 rows)
+
+CREATE FUNCTION
+CREATE TABLE
+                           List of functions
+ Schema |    Name     | Result data type | Argument data types |  Type  
+--------+-------------+------------------+---------------------+--------
+ public | mycheckfunc | boolean          | integer             | normal
+(1 row)
+
+    Table "public.mytable"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ id     | integer | not null
+Indexes:
+    "mytable_pkey" PRIMARY KEY, btree (id)
+Check constraints:
+    "mytable_id_check" CHECK (mycheckfunc(id))
+
+ _snapshotid |               _revisionid                
+-------------+------------------------------------------
+           4 | 93f931218b488029eebac61161ddc1066d05d995
+(1 row)
+
+ _snapshotid |               _revisionid                
+-------------+------------------------------------------
+           5 | 8ba39bf65949adc6b69aa356c29725cf06c77e26
+(1 row)
+
+                       List of functions
+ Schema | Name | Result data type | Argument data types | Type 
+--------+------+------------------+---------------------+------
+(0 rows)
+
+    Table "public.mytable"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ id     | integer | not null
+Indexes:
+    "mytable_pkey" PRIMARY KEY, btree (id)
+
+ _snapshotid |               _revisionid                
+-------------+------------------------------------------
+           6 | 93f931218b488029eebac61161ddc1066d05d995
+(1 row)
+
+                           List of functions
+ Schema |    Name     | Result data type | Argument data types |  Type  
+--------+-------------+------------------+---------------------+--------
+ public | mycheckfunc | boolean          | integer             | normal
+(1 row)
+
+    Table "public.mytable"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ id     | integer | not null
+Indexes:
+    "mytable_pkey" PRIMARY KEY, btree (id)
+Check constraints:
+    "mytable_id_check" CHECK (mycheckfunc(id))
+
+CREATE VIEW
+       View "public.myview"
+   Column    |  Type   | Modifiers 
+-------------+---------+-----------
+ id          | integer | 
+ mycheckfunc | boolean | 
+View definition:
+ SELECT mytable.id, mycheckfunc(mytable.id) AS mycheckfunc
+   FROM mytable;
+
+ _snapshotid |               _revisionid                
+-------------+------------------------------------------
+           7 | dbb55f28beaa96efc23326a9fca5f0aa0488ed9d
+(1 row)
+
+ _snapshotid |               _revisionid                
+-------------+------------------------------------------
+           8 | 93f931218b488029eebac61161ddc1066d05d995
+(1 row)
+
+                           List of functions
+ Schema |    Name     | Result data type | Argument data types |  Type  
+--------+-------------+------------------+---------------------+--------
+ public | mycheckfunc | boolean          | integer             | normal
+(1 row)
+
+    Table "public.mytable"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ id     | integer | not null
+Indexes:
+    "mytable_pkey" PRIMARY KEY, btree (id)
+Check constraints:
+    "mytable_id_check" CHECK (mycheckfunc(id))
+
+ _snapshotid |               _revisionid                
+-------------+------------------------------------------
+           9 | dbb55f28beaa96efc23326a9fca5f0aa0488ed9d
+(1 row)
+
+       View "public.myview"
+   Column    |  Type   | Modifiers 
+-------------+---------+-----------
+ id          | integer | 
+ mycheckfunc | boolean | 
+View definition:
+ SELECT mytable.id, mycheckfunc(mytable.id) AS mycheckfunc
+   FROM mytable;
+
+                           List of functions
+ Schema |    Name     | Result data type | Argument data types |  Type  
+--------+-------------+------------------+---------------------+--------
+ public | mycheckfunc | boolean          | integer             | normal
+(1 row)
+
+    Table "public.mytable"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ id     | integer | not null
+Indexes:
+    "mytable_pkey" PRIMARY KEY, btree (id)
+Check constraints:
+    "mytable_id_check" CHECK (mycheckfunc(id))
+
+ROLLBACK

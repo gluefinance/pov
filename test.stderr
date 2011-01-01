@@ -1,0 +1,40 @@
+psql:test.sql:7: LOG:  statement: CREATE FUNCTION myfunc() RETURNS VOID AS $$ $$ LANGUAGE sql;
+psql:test.sql:10: DEBUG:  
+-19e81ebbf8eced64bac4a73c3981deb818b58a99
+-    DROP FUNCTION public.myfunc()
+psql:test.sql:14: LOG:  statement: CREATE FUNCTION mycheckfunc(int) RETURNS BOOLEAN AS $$ SELECT $1 > 1 $$ LANGUAGE sql;
+psql:test.sql:15: LOG:  statement: CREATE TABLE mytable(id int, PRIMARY KEY(id), CHECK(mycheckfunc(id)));
+psql:test.sql:15: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "mytable_pkey" for table "mytable"
+psql:test.sql:19: DEBUG:  
+-cb045f5342557919d35ea99e0214aeb2c0e46caa
+-    ALTER TABLE public.mytable DROP CONSTRAINT mytable_id_check
+psql:test.sql:19: DEBUG:  
+-d99627b987ce66e11197e30fef86a8d701660f28
+-    DROP FUNCTION public.mycheckfunc(integer)
+psql:test.sql:22: DEBUG:  
++d99627b987ce66e11197e30fef86a8d701660f28
++    CREATE OR REPLACE FUNCTION public.mycheckfunc(integer)
++     RETURNS boolean
++     LANGUAGE sql
++    AS $function$ SELECT $1 > 1 $function$
++    ;ALTER FUNCTION public.mycheckfunc(integer) OWNER TO postgres
+psql:test.sql:22: DEBUG:  
++cb045f5342557919d35ea99e0214aeb2c0e46caa
++    ALTER TABLE public.mytable ADD CONSTRAINT mytable_id_check CHECK (public.mycheckfunc(id))
+psql:test.sql:27: LOG:  statement: CREATE VIEW myview AS SELECT *, mycheckfunc(id) FROM mytable;
+psql:test.sql:30: DEBUG:  
+-fb23e8c06791024105e531ab4a9bd42ea4b033de
+-    DROP VIEW public.myview
+psql:test.sql:30: DEBUG:  drop auto-cascades to type public.myview
+CONTEXT:  SQL statement "DROP VIEW public.myview"
+PL/pgSQL function "fsnapshot" line 55 at EXECUTE statement
+psql:test.sql:30: DEBUG:  drop auto-cascades to type public.myview[]
+CONTEXT:  SQL statement "DROP VIEW public.myview"
+PL/pgSQL function "fsnapshot" line 55 at EXECUTE statement
+psql:test.sql:30: DEBUG:  drop auto-cascades to rule _RETURN on view public.myview
+CONTEXT:  SQL statement "DROP VIEW public.myview"
+PL/pgSQL function "fsnapshot" line 55 at EXECUTE statement
+Did not find any relation named "myview".
+psql:test.sql:34: DEBUG:  
++fb23e8c06791024105e531ab4a9bd42ea4b033de
++    CREATE VIEW public.myview AS SELECT mytable.id, public.mycheckfunc(mytable.id) AS mycheckfunc FROM public.mytable;;ALTER VIEW public.myview OWNER TO postgres

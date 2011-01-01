@@ -19,38 +19,38 @@ BEGIN;
 SET LOCAL search_path TO public;
 
 -- API functions
-\i schema/public/functions/fsnapshot.sql
+\i sql/schema/public/functions/fsnapshot.sql
 
 SET LOCAL search_path TO fsnapshot;
 -- Tables
-\i schema/fsnapshot/tables/ObjectTypes.sql
-\i schema/fsnapshot/tables/Objects.sql
-\i schema/fsnapshot/tables/Revisions.sql
-\i schema/fsnapshot/tables/Snapshots.sql
+\i sql/schema/fsnapshot/tables/ObjectTypes.sql
+\i sql/schema/fsnapshot/tables/Objects.sql
+\i sql/schema/fsnapshot/tables/Revisions.sql
+\i sql/schema/fsnapshot/tables/Snapshots.sql
 
 -- Populate control data
-\i data/ObjectTypes.sql
+\i sql/data/ObjectTypes.sql
 
 -- Internal functions
-\i schema/fsnapshot/functions/Get_Object.sql
-\i schema/fsnapshot/functions/Get_Revision.sql
-\i schema/fsnapshot/functions/New_Revision.sql
-\i schema/fsnapshot/functions/Set_Object.sql
-\i schema/fsnapshot/functions/Set_Revision.sql
-\i schema/fsnapshot/functions/Hash.sql
-\i schema/fsnapshot/functions/Sort_Array.sql
+\i sql/schema/fsnapshot/functions/Get_Object.sql
+\i sql/schema/fsnapshot/functions/Get_Revision.sql
+\i sql/schema/fsnapshot/functions/New_Revision.sql
+\i sql/schema/fsnapshot/functions/Set_Object.sql
+\i sql/schema/fsnapshot/functions/Set_Revision.sql
+\i sql/schema/fsnapshot/functions/Hash.sql
+\i sql/schema/fsnapshot/functions/Sort_Array.sql
 
 -- Internal views
-\i schema/fsnapshot/views/View_Functions.sql
-\i schema/fsnapshot/views/View_Constraints.sql
-\i schema/fsnapshot/views/View_Views.sql
+\i sql/schema/fsnapshot/views/View_Functions.sql
+\i sql/schema/fsnapshot/views/View_Constraints.sql
+\i sql/schema/fsnapshot/views/View_Views.sql
 
 SET LOCAL search_path TO public;
 
 -- Public views
-\i schema/public/views/view_snapshots.sql
+\i sql/schema/public/views/view_snapshots.sql
 
 -- Grant permissions
-\i schema/grant.sql
+\i sql/schema/grant.sql
 
 COMMIT;

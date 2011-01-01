@@ -94,8 +94,8 @@ INNER JOIN Objects     ON (Objects.ObjectID = DropObjects.ObjectID)
 INNER JOIN ObjectTypes ON (ObjectTypes.Name = Objects.Content[1])
 ORDER BY ObjectTypes.ObjectTypeID DESC
 LOOP
-    RAISE DEBUG 'Drop ObjectID %', _ObjectID;
     SELECT Content[_DROP] INTO STRICT _SQL FROM Objects WHERE ObjectID = _ObjectID;
+    RAISE DEBUG E'\n-%\n%', _ObjectID, '-    ' || replace(_SQL,E'\n',E'\n-    ');
     EXECUTE _SQL;
 END LOOP;
 
@@ -110,8 +110,8 @@ INNER JOIN Objects     ON (Objects.ObjectID = CreateObjects.ObjectID)
 INNER JOIN ObjectTypes ON (ObjectTypes.Name = Objects.Content[1])
 ORDER BY ObjectTypes.ObjectTypeID ASC
 LOOP
-    RAISE DEBUG 'Create ObjectID %', _ObjectID;
     SELECT Content[_CREATE] INTO STRICT _SQL FROM Objects WHERE ObjectID = _ObjectID;
+    RAISE DEBUG E'\n+%\n%', _ObjectID, '+    ' || replace(_SQL,E'\n',E'\n+    ');
     EXECUTE _SQL;
 END LOOP;
 
