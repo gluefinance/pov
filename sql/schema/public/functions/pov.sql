@@ -1,16 +1,16 @@
 -- This file contains the definition for the two API functions with same name but with different arguments.
 
-CREATE OR REPLACE FUNCTION fsnapshot(
+CREATE OR REPLACE FUNCTION pov(
 OUT _SnapshotID bigint,
 OUT _RevisionID text
 ) RETURNS RECORD AS $BODY$
--- Takes a new fsnapshot
+-- Takes a new pov
 -- Example:
--- SELECT fsnapshot();
+-- SELECT pov();
 DECLARE
 BEGIN
 
-SET LOCAL search_path TO fsnapshot;
+SET LOCAL search_path TO pov;
 
 -- Create new revision, unless it already exists, in which case the existing one will be returned.
 _RevisionID := New_Revision();
@@ -22,10 +22,10 @@ IF FOUND THEN
     RETURN;
 END IF;
 
--- Deactivate existing fsnapshot, if any. (might affect 0 rows, it's not a bug we lack IF NOT FOUND here)
+-- Deactivate existing pov, if any. (might affect 0 rows, it's not a bug we lack IF NOT FOUND here)
 UPDATE Snapshots SET Active = 0 WHERE Active = 1;
 
--- Create a new FSnapshotID. The RevisionID might be identical to a previous fsnapshot.
+-- Create a new FSnapshotID. The RevisionID might be identical to a previous pov.
 INSERT INTO Snapshots (RevisionID) VALUES (_RevisionID) RETURNING SnapshotID INTO STRICT _SnapshotID;
 
 -- Return _SnapshotID and _RevisionID
@@ -37,14 +37,14 @@ $BODY$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 
 
-CREATE OR REPLACE FUNCTION fsnapshot(
+CREATE OR REPLACE FUNCTION pov(
 OUT _SnapshotID bigint,
 OUT _RevisionID text,
 _RestoreSnapshotID bigint
 ) RETURNS RECORD AS $BODY$
--- Rollback to given fsnapshot
+-- Rollback to given pov
 -- Example:
--- SELECT fsnapshot(1);
+-- SELECT pov(1);
 DECLARE
 _ObjectIDs text[];
 _FunctionID oid;
@@ -66,9 +66,9 @@ SET check_function_bodies = false;
 
 SET LOCAL search_path TO public;
 
-SELECT * INTO STRICT _CurrentSnapshotID, _CurrentRevisionID FROM fsnapshot();
+SELECT * INTO STRICT _CurrentSnapshotID, _CurrentRevisionID FROM pov();
 
-SET LOCAL search_path TO fsnapshot;
+SET LOCAL search_path TO pov;
 
 SELECT ObjectIDs INTO _CurrentObjectIDs FROM Revisions WHERE RevisionID = _CurrentRevisionID;
 IF NOT FOUND THEN
@@ -117,7 +117,7 @@ END LOOP;
 
 SET LOCAL search_path TO public;
 
-SELECT * INTO STRICT _SnapshotID, _RestoredRevisionID FROM fsnapshot();
+SELECT * INTO STRICT _SnapshotID, _RestoredRevisionID FROM pov();
 
 IF _RevisionID <> _RestoredRevisionID THEN
     RAISE EXCEPTION 'ERROR_FSNAPSHOT_REVISION_DIFF RevisionID % RestoredRevisionID %', _RevisionID, _RestoredRevisionID;

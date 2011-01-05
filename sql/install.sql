@@ -1,49 +1,49 @@
--- Users belonging to the fsnapshot_group group will have access to the functions in the schema/public/functions/ directory
-CREATE GROUP fsnapshot_group;
+-- Users belonging to the pov_group group will have access to the functions in the schema/public/functions/ directory
+CREATE GROUP pov_group;
 
--- When a user of the fsnapshot_group group executes fsnapshot() or fsnapshot([hash]::text),
--- it is executed as the fsnapshot user.
--- The fsnapshot user has the necessary superuser access to create/drop objects.
-CREATE USER fsnapshot WITH SUPERUSER;
+-- When a user of the pov_group group executes pov() or pov([hash]::text),
+-- it is executed as the pov user.
+-- The pov user has the necessary superuser access to create/drop objects.
+CREATE USER pov WITH SUPERUSER;
 
--- Create separate schema for fsnapshot to avoid conflicts with other contribs.
-CREATE SCHEMA AUTHORIZATION fsnapshot;
+-- Create separate schema for pov to avoid conflicts with other contribs.
+CREATE SCHEMA AUTHORIZATION pov;
 
 -- Create plpgsql language, you will get an error if it already exists, which is safe to ignore.
 CREATE LANGUAGE plpgsql;
 
-SET ROLE TO fsnapshot;
+SET ROLE TO pov;
 
 BEGIN;
 
 SET LOCAL search_path TO public;
 
 -- API functions
-\i sql/schema/public/functions/fsnapshot.sql
+\i sql/schema/public/functions/pov.sql
 
-SET LOCAL search_path TO fsnapshot;
+SET LOCAL search_path TO pov;
 -- Tables
-\i sql/schema/fsnapshot/tables/ObjectTypes.sql
-\i sql/schema/fsnapshot/tables/Objects.sql
-\i sql/schema/fsnapshot/tables/Revisions.sql
-\i sql/schema/fsnapshot/tables/Snapshots.sql
+\i sql/schema/pov/tables/ObjectTypes.sql
+\i sql/schema/pov/tables/Objects.sql
+\i sql/schema/pov/tables/Revisions.sql
+\i sql/schema/pov/tables/Snapshots.sql
 
 -- Populate control data
 \i sql/data/ObjectTypes.sql
 
 -- Internal functions
-\i sql/schema/fsnapshot/functions/Get_Object.sql
-\i sql/schema/fsnapshot/functions/Get_Revision.sql
-\i sql/schema/fsnapshot/functions/New_Revision.sql
-\i sql/schema/fsnapshot/functions/Set_Object.sql
-\i sql/schema/fsnapshot/functions/Set_Revision.sql
-\i sql/schema/fsnapshot/functions/Hash.sql
-\i sql/schema/fsnapshot/functions/Sort_Array.sql
+\i sql/schema/pov/functions/Get_Object.sql
+\i sql/schema/pov/functions/Get_Revision.sql
+\i sql/schema/pov/functions/New_Revision.sql
+\i sql/schema/pov/functions/Set_Object.sql
+\i sql/schema/pov/functions/Set_Revision.sql
+\i sql/schema/pov/functions/Hash.sql
+\i sql/schema/pov/functions/Sort_Array.sql
 
 -- Internal views
-\i sql/schema/fsnapshot/views/View_Functions.sql
-\i sql/schema/fsnapshot/views/View_Constraints.sql
-\i sql/schema/fsnapshot/views/View_Views.sql
+\i sql/schema/pov/views/View_Functions.sql
+\i sql/schema/pov/views/View_Constraints.sql
+\i sql/schema/pov/views/View_Views.sql
 
 SET LOCAL search_path TO public;
 

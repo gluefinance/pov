@@ -15,5 +15,5 @@ END;
 $BODY$ LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION Hash(_Text text[]) RETURNS TEXT AS $BODY$
-SELECT fsnapshot.Hash(array_to_string(array_agg(fsnapshot.Hash(unnest)),'')) FROM unnest($1)
+SELECT pov.Hash(array_to_string(array_agg(pov.Hash(unnest)),'')) FROM unnest($1)
 $BODY$ LANGUAGE sql IMMUTABLE;

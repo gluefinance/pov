@@ -1,20 +1,20 @@
 BEGIN;
 
-SET ROLE TO fsnapshot;
+SET ROLE TO pov;
 
 SET LOCAL search_path TO public;
 -- API functions
-\i sql/schema/public/functions/fsnapshot.sql
+\i sql/schema/public/functions/pov.sql
 
-SET LOCAL search_path TO fsnapshot;
+SET LOCAL search_path TO pov;
 
 -- Internal functions
-\i sql/schema/fsnapshot/functions/Get_Object.sql
-\i sql/schema/fsnapshot/functions/Get_Revision.sql
-\i sql/schema/fsnapshot/functions/New_Revision.sql
-\i sql/schema/fsnapshot/functions/Set_Object.sql
-\i sql/schema/fsnapshot/functions/Set_Revision.sql
-\i sql/schema/fsnapshot/functions/Hash.sql
-\i sql/schema/fsnapshot/functions/Sort_Array.sql
+\i sql/schema/pov/functions/Get_Object.sql
+\i sql/schema/pov/functions/Get_Revision.sql
+\i sql/schema/pov/functions/New_Revision.sql
+\i sql/schema/pov/functions/Set_Object.sql
+\i sql/schema/pov/functions/Set_Revision.sql
+\i sql/schema/pov/functions/Hash.sql
+\i sql/schema/pov/functions/Sort_Array.sql
 
 COMMIT;

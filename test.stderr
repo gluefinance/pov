@@ -27,13 +27,13 @@ psql:test.sql:30: DEBUG:
 -    DROP VIEW public.myview
 psql:test.sql:30: DEBUG:  drop auto-cascades to type public.myview
 CONTEXT:  SQL statement "DROP VIEW public.myview"
-PL/pgSQL function "fsnapshot" line 55 at EXECUTE statement
+PL/pgSQL function "pov" line 55 at EXECUTE statement
 psql:test.sql:30: DEBUG:  drop auto-cascades to type public.myview[]
 CONTEXT:  SQL statement "DROP VIEW public.myview"
-PL/pgSQL function "fsnapshot" line 55 at EXECUTE statement
+PL/pgSQL function "pov" line 55 at EXECUTE statement
 psql:test.sql:30: DEBUG:  drop auto-cascades to rule _RETURN on view public.myview
 CONTEXT:  SQL statement "DROP VIEW public.myview"
-PL/pgSQL function "fsnapshot" line 55 at EXECUTE statement
+PL/pgSQL function "pov" line 55 at EXECUTE statement
 Did not find any relation named "myview".
 psql:test.sql:34: DEBUG:  
 +fb23e8c06791024105e531ab4a9bd42ea4b033de

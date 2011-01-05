@@ -1,3 +1,5 @@
+pov - PostgreSQL Object Version control system
+
 DESCRIPTION
 
 Take a snapshot or rollback all stored procedures in a PostgreSQL database.
@@ -45,14 +47,14 @@ Before reading any further, ask yourselves the following questions.
 
 INTRODUCTION
 
-fsnapshot can take a snapshot of all your database functions and objects
+pov can take a snapshot of all your database functions and objects
 depending on them, such as constraints and views using functions.
 
-fsnapshot can rollback to a previous snapshot without modifying any of your
+pov can rollback to a previous snapshot without modifying any of your
 data or tables. It will only execute the minimum set of drop/create commands
 to carry out the rollback.
 
-fsnapshot will use SHA1 if the pgcrypto contrib package is available,
+pov will use SHA1 if the pgcrypto contrib package is available,
 otherwise MD5 will be used as the hash algorithm.
 
 
@@ -85,7 +87,7 @@ SYNOPSIS
 
 -- 1. Take a snapshot.
 
-    test=# SELECT * FROM fsnapshot();
+    test=# SELECT * FROM pov();
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
                1 | 8ba39bf65949adc6b69aa356c29725cf06c77e26
@@ -94,7 +96,7 @@ SYNOPSIS
 
 -- 2. Take a snapshot.
 
-    test=# SELECT * FROM fsnapshot();
+    test=# SELECT * FROM pov();
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
                1 | 8ba39bf65949adc6b69aa356c29725cf06c77e26
@@ -118,16 +120,16 @@ SYNOPSIS
 
 -- 5. Take a snapshot.
 
-    test=# SELECT * FROM fsnapshot();
+    test=# SELECT * FROM pov();
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
                2 | 6c4c86015a45d9361889ce29908937b387e4dde0
     (1 row)
 
 
--- 4. Rollback to fsnapshot 1.
+-- 4. Rollback to pov 1.
 
-    test=# SELECT * FROM fsnapshot(1);
+    test=# SELECT * FROM pov(1);
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
                3 | 8ba39bf65949adc6b69aa356c29725cf06c77e26
@@ -143,9 +145,9 @@ SYNOPSIS
     (0 rows)
 
 
--- 6. Rollback to fsnapshot 2.
+-- 6. Rollback to pov 2.
 
-    test=# SELECT * FROM fsnapshot(2);
+    test=# SELECT * FROM pov(2);
      _snapshotid |               _revisionid                
     -------------+------------------------------------------
                4 | 6c4c86015a45d9361889ce29908937b387e4dde0

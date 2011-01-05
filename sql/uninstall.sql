@@ -1,5 +1,5 @@
-DROP SCHEMA fsnapshot CASCADE;
-DROP FUNCTION public.fsnapshot();
-DROP FUNCTION public.fsnapshot(bigint);
-DROP USER fsnapshot;
-DROP GROUP fsnapshot_group;
+DROP SCHEMA pov CASCADE;
+DROP FUNCTION public.pov();
+DROP FUNCTION public.pov(bigint);
+DROP USER pov;
+DROP GROUP pov_group;
