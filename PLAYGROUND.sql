@@ -117,3 +117,29 @@ ORDER BY row_number
 --          10 | 52039 | public  | view_user_views              | public.view_user_views_drop_order <- public.view_user_leaf_views <- public.view_user_views   | {52057,52048,52039} |     2
 --          11 | 52035 | public  | view_view_depends            | public.view_user_views_drop_order <- public.view_user_leaf_views <- public.view_view_depends | {52057,52048,52035} |     2
 -- (11 rows)
+
+-- Generate dot graph of dependencies:
+
+COPY (
+SELECT 'digraph pg_depend {'
+UNION ALL
+SELECT * FROM (
+  SELECT * FROM (
+    SELECT DISTINCT '    "' || classid::regclass::text || '.' || objid || '" -> "' || refclassid::regclass::text || '.' || refobjid || '";' FROM pg_depend WHERE deptype <> 'p'
+    UNION ALL
+    SELECT DISTINCT '    "' || classid::regclass::text || '" -> "' || refclassid::regclass::text || '";' FROM pg_depend WHERE deptype <> 'p'
+  ) AS pg_depend_now
+  EXCEPT
+  SELECT * FROM (
+    SELECT DISTINCT '    "' || classid::regclass::text || '.' || objid || '" -> "' || refclassid::regclass::text || '.' || refobjid || '";' FROM pg_depend_origin WHERE deptype <> 'p'
+    UNION ALL
+    SELECT DISTINCT '    "' || classid::regclass::text || '" -> "' || refclassid::regclass::text || '";' FROM pg_depend_origin WHERE deptype <> 'p'
+  ) AS pg_depend_then
+) AS innerq
+UNION ALL
+SELECT '}'
+) TO '/tmp/pg_depend.dot'
+;
+
+-- dot -Tpdf -opg_depend_dot.pdf pg_depend.dot
+
