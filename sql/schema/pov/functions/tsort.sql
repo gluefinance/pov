@@ -1,8 +1,4 @@
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text) RETURNS TEXT[] AS $BODY$
-SELECT nodes FROM tsort($1, ' ',NULL,NULL,NULL);
-$BODY$ LANGUAGE sql STABLE;
-
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, narrow text, debug integer, algorithm text) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, nodes text, selection text, operator text, direction text) RETURNS TEXT[] AS $BODY$
 # tsort - return a tree's nodes in topological order
 
 # Code stolen from:
@@ -17,10 +13,100 @@ BEGIN {
     warnings->import();
 }
 # read input
-my ($edges_string, $delimiter, $narrow, $debug, $algorithm) = @_;
+my ($edges_string, $delimiter, $debug, $algorithm, $selection_nodes, $selection_mode, $operator, $direction) = @_;
+
+# set readme
+my $readme = '
+DESCRIPTION
+tsort - return a tree\'s nodes in topological order
+
+
+SYNOPSIS
+SELECT tsort(edges text, delimiter text, debug integer, nodes text,
+    selection text, operator text, direction text, algorithm text);
+
+OUTPUT
+    nodes       text[]  Array of nodes in topologically sorted order
+
+INPUT PARAMETERS
+    Parameter   Type    Regex     Description
+    ============================================================================
+    edges       text    ^.+$        Node pairs, separated by [delimiter].
+
+    delimiter   text    ^.*$        Node separator in [edges],
+                                    default is \' \', i.e. single blank space.
+
+    debug       integer             Print debug information using RAISE DEBUG:
+                        0           no debug (default)
+                        1           some debug
+                        2           verbose debug
+
+    algorithm   text                Sorting algorithm:
+                        DFS         depth-first (default)
+                                    explores as far as possible along each
+                                    branch before backtracking.
+                        BFS         breadth-first
+                                    explores all the neighboring nodes,
+                                    then for each of those nearest nodes,
+                                    it explores their unexplored neighbor
+                                    nodes, and so on.
+                        ^sub        sort using perl subroutine.
+                                    examples:
+                                    # sort numerically ascending
+                                    sub {$a <=> $b}
+    
+                                    # sort numerically descending
+                                    sub {$b <=> $a}
+    
+                                    #sort lexically ascending
+                                    sub {$a cmp $b}
+    
+                                    # sort lexically descending
+                                    sub {$b cmp $a}
+    
+                                    # sort case-insensitively
+                                    sub {uc($a) cmp uc($b)}
+    
+                                    For more examples, please goto:
+                                    http://perldoc.perl.org/functions/sort.html
+
+    The following options will not affect the order of the nodes in the result,
+    they only control which nodes are included in the result:
+
+    Parameter   Type    Regex     Description
+    ============================================================================
+    nodes       text                List of [nodes] based on [selection]:
+                        NULL        not applicable (default)
+                        [nodes]     base [selection] on [nodes]
+
+    selection   text                Selection of nodes, used by [operator]:
+                        ALL         select all nodes (default)
+                        ISOLATED    select nodes without any
+                                    successors nor predecessors
+                        SOURCE      select nodes with successors
+                                    but no predecessors
+                        SINK        select nodes with predecessors
+                                    but no successors
+                        CONN_INCL   select nodes connected to [nodes],
+                                    including [nodes]
+                        CONN_EXCL   select nodes connected to [nodes],
+                                    excluding [nodes]
+                                    separated by [delimiter]
+
+    operator    text                Include or exclude nodes in [selection]:
+                        INCLUDE     include nodes (default)
+                        EXCLUDE     exclude nodes
+
+    direction   text                Only applicable if [nodes] is set:
+                        BOTH        traverse both successors and
+                                    predecessors (default)
+                        UP          only traverse predecessors
+                        DOWN        only traverse successors
+
+';
 
 # declare variables
-my $readme;           # description on how to use this utility
+my $node;             # a node in the tree
 my $left;             # left node in edge
 my $right;            # right node in edge
 my %pairs;            # hash, key=$left, value=hash which key=$right, i.e. $pairs{$left}{$right}
@@ -33,75 +119,40 @@ my @sink_nodes;       # array of nodes with predecessors but no successors
 my @isolated_nodes;   # array of nodes without any successors nor predecessors
 my @sorted_nodes;     # array of nodes in topologically sorted order (output variable)
 
-# set defaults
-$algorithm = 'DFS' unless defined $algorithm;
-$debug = 0 unless defined $debug;
-
-# set readme
-$readme = '
-DESCRIPTION
-tsort - return a tree\'s nodes in topological order
-
-USAGE
-tsort(edges, delimiter, algorithm, narrow, debug)
-
-SYNOPSIS
-postgres=# SELECT tsort(\'a aa a ab aa aaa aa aab ab aba ab abb\',\' \',\'depth-first\',NULL,NULL);
-           tsort           
----------------------------
- {a,ab,abb,aba,aa,aab,aaa}
-(1 row)
-
-OUTPUT
-    nodes       text[]  array of nodes in topologically sorted order
-
-INPUT
-    edges       text    list of node pairs
-    delimiter   text    token separating each node in the list of edges
-    narrow      text    limit the search to start at only these nodes or NULL for all nodes
-    debug       integer print debug information using RAISE DEBUG, 0=no, 1=some, 2=verbose
-    algorithm   text    sorting algorithm:
-                        DFS      depth-first (default)
-                                 explores as far as possible along each branch
-                                 before backtracking.
-                        BFS      breadth-first
-                                 explores all the neighboring nodes,
-                                 then for each of those nearest nodes,
-                                 it explores their unexplored neighbor nodes,
-                                 and so on, until it finds the goal.
-                        ISOLATED only return the nodes without any successors nor predecessors
-                        SOURCE   only return the nodes with successors but no predecessors
-                        SINK     only return the nodes with predecessors but no successors
-                        ^sub     sort using perl subroutine,
-                                 examples:
-                                 sort numerically ascending  : sub {$a <=> $b}
-                                 sort numerically descending : sub {$b <=> $a}
-                                 sort lexically ascending    : sub {$a cmp $b}
-                                 sort lexically descending   : sub {$b cmp $a}
-                                 sort case-insensitively     : sub {uc($a) cmp uc($b)}
-                                 For more examples, please goto:
-                                 http://perldoc.perl.org/functions/sort.html
-';
-
 # validate input arguments
-die "invalid algorithm\n\n$readme" unless $algorithm =~ '^(DFS|BFS|ISOLATED|SOURCE|SINK|sub\s+{.+})$';
-die "invalid delimiter\n\n$readme" unless defined $delimiter && $delimiter ne '';
+die "edges is undefined\n\n$readme" unless defined $edges_string;
+die "invalid algorithm: $algorithm\n\n$readme"      if defined $algorithm      && $algorithm      !~ '^(DFS|BFS|ISOLATED|SOURCE|SINK|sub\s+{.+})$';
+die "invalid selection: $selection_mode\n\n$readme" if defined $selection_mode && $selection_mode !~ '^(ALL|ISOLATED|SOURCE|SINK|CONN_INCL|CONN_EXCL)$';
+die "invalid operator: $operator\n\n$readme"        if defined $operator       && $operator       !~ '^(INCLUDE|EXCLUDE)$';
+die "invalid direction: $direction\n\n$readme"      if defined $direction      && $direction      !~ '^(BOTH|UP|DOWN)$';
 
-# parse string of nodes into edges array, e.g. 'a b a c' -> ('a','b','a','c')
+# set defaults
+$algorithm       = 'DFS'     unless defined $algorithm;
+$delimiter       = ' '       unless defined $delimiter;
+$debug           = 0         unless defined $debug;
+$selection_mode  = 'ALL'     unless defined $selection_mode;
+$operator        = 'INCLUDE' unless defined $operator;
+$direction       = 'BOTH'    unless defined $direction;
+
+# A. PARSE STRING OF NODES
+
+# create edges array, e.g. 'a b a c' -> ('a','b','a','c')
 my @edges = split $delimiter, $edges_string;
 
 # check balance
 die "input edges contains an odd number of nodes\n\n$readme" unless @edges % 2 == 0;
 
+# B. CREATE DATA STRUCTURES
+
 $debug > 0 && elog(DEBUG, "1. build data structures pairs, successors, predecessors");
-foreach my $node (@edges) {
+foreach $node (@edges) {
     unless( defined $left ) {
         $left = $node;
         next;
     }
     $right = $node;
     $pairs{$left}{$right}++;
-    $debug > 1 && elog(DEBUG, '    1.1. $pairs{$left}{$right}++ : $left=' . $left . ' $right=' . $right . ' $pairs{$left}{$right}=' . $pairs{$left}{$right} );
+    $debug > 1 && elog(DEBUG, '    1.1. ' . $pairs{$left}{$right} . ' $left=' . $left . ' $right=' . $right);
     # for every unique pair (first time seen):
     if ($pairs{$left}{$right} == 1) {
         $num_predecessors{$left} = 0 unless exists $num_predecessors{$left};
@@ -115,6 +166,8 @@ foreach my $node (@edges) {
     undef $right;
 }
 
+# C. SPECIAL SORTING, PHASE 1
+
 # if algorithm begins with "sub", compile sort algorithm
 my $sort_sub;
 if ($algorithm =~ /^sub/) {
@@ -122,18 +175,27 @@ if ($algorithm =~ /^sub/) {
 }
 
 # sort successors
+$debug > 0 && elog(DEBUG,"2. sort successors and predecessors");
 if ($sort_sub) {
-    $debug > 0 && elog(DEBUG,"2. sort successors");
-    foreach my $node (keys %successors) {
-        $debug > 1 && elog(DEBUG,"    2.1. sorting node $node");
+    foreach $node (keys %successors) {
+        $debug > 1 && elog(DEBUG,"    2.1. sorting successor node $node");
         @{$successors{$node}} = sort $sort_sub @{$successors{$node}};
         $debug > 1 && elog(DEBUG,"    2.2. sorted successors for node $node: " . join($delimiter,@{$successors{$node}}) );
     }
 }
 
-$debug > 0 && elog(DEBUG, "3. find isolated, source and sink nodes");
+# sort predecessors
+if ($sort_sub) {
+    foreach $node (keys %predecessors) {
+        $debug > 1 && elog(DEBUG,"    2.3. sorting predecessor node $node");
+        @{$predecessors{$node}} = sort $sort_sub @{$predecessors{$node}};
+        $debug > 1 && elog(DEBUG,"    2.4. sorted predecessors for node $node: " . join($delimiter,@{$predecessors{$node}}) );
+    }
+}
 
-# find isolated nodes
+# D. FIND ISOLATED, SOURCE AND SINK NODES
+
+$debug > 0 && elog(DEBUG, "3. find isolated, source and sink nodes");
 # the hashes %num_predecessors and %num_successors both contain all the nodes,
 # we could use any of them to get the isolated nodes
 @isolated_nodes = grep {!$num_predecessors{$_} && !$num_successors{$_}}   keys %num_predecessors;
@@ -142,24 +204,31 @@ $debug > 0 && elog(DEBUG, "3. find isolated, source and sink nodes");
 # find sink nodes
 @sink_nodes     = grep {!$num_successors{$_}}                             keys %num_successors;
 
+# E. SPECIAL SORTING, PHASE 2
+
 # should we sort?
+$debug > 0 && elog(DEBUG, "4. check if we sort sort isolated, source and sink arrays");
 if ($sort_sub) {
-    $debug > 0 && elog(DEBUG, "4. sort isolated, source and sink arrays");
     @isolated_nodes  = sort $sort_sub @isolated_nodes;
     @source_nodes    = sort $sort_sub @source_nodes;
     @sink_nodes      = sort $sort_sub @sink_nodes;
 }
 
+################################################################################
+# F. <--- RETURN #1, ISOLATED, SOURCE OR SINK NODES                            #
+################################################################################
 $debug > 0 && elog(DEBUG, "5. return if algorithm is ISOLATED, SOURCE or SINK");
-return \@isolated_nodes if $algorithm eq 'ISOLATED';
-return \@source_nodes   if $algorithm eq 'SOURCE';
-return \@sink_nodes     if $algorithm eq 'SINK';
+return \@isolated_nodes if $selection_mode eq 'ISOLATED';
+return \@source_nodes   if $selection_mode eq 'SOURCE';
+return \@sink_nodes     if $selection_mode eq 'SINK';
+################################################################################
+
+# G. EXECUTE TOPOLOGICAL SORT ALGORITHM
 
 $debug > 0 && elog(DEBUG, "6. start search at source nodes");
 my @nodes = @source_nodes;
 
 while (@nodes) {
-    my $node;
     if ($sort_sub) {
         $debug > 1 && elog(DEBUG, "    6.1. unsorted nodes: " . join($delimiter,@nodes));
         # Sort nodes, then pick the first one
@@ -188,55 +257,131 @@ while (@nodes) {
     }
 }
 
-# Build debug message
-my $debug_message = "\n7. debug\npairs:\n";
-foreach my $left (sort %pairs) {
-    foreach my $right (sort keys %{ $pairs{$left} }) {
-        $debug_message .= "$left$delimiter$right$delimiter$pairs{$left}{$right}\n";
+$debug > 1 && elog(DEBUG, "7. Debug:");
+# H. COMPOSE DEBUG MESSAGE
+$debug > 1 && elog(DEBUG, "    7.1. edges:");
+foreach $left (sort %pairs) {
+    foreach $right (sort keys %{ $pairs{$left} }) {
+        $debug > 1 && elog(DEBUG, "        7.1.1. $left$delimiter$right$delimiter$pairs{$left}{$right}");
     }
 }
-$debug_message .= "num_successors:\n";
-foreach my $node (sort keys %num_successors) {
-    $debug_message .= "$node$delimiter$num_successors{$node}\n";
+$debug > 1 && elog(DEBUG, "    7.2. num_successors:");
+foreach $node (sort keys %num_successors) {
+    $debug > 1 && elog(DEBUG, "        7.2.1. $node$delimiter$num_successors{$node}");
 }
-$debug_message .= "num_predecessors:\n";
-foreach my $node (sort keys %num_predecessors) {
-    $debug_message .= "$node$delimiter$num_predecessors{$node}\n";
+$debug > 1 && elog(DEBUG, "    7.3. num_predecessors:");
+foreach $node (sort keys %num_predecessors) {
+    $debug > 1 && elog(DEBUG, "        7.3.1. $node$delimiter$num_predecessors{$node}");
 }
-$debug_message .= "successors:\n";
-foreach my $left (sort keys %successors) {
-    $debug_message .= "$left";
-    foreach my $right ( @{ $successors{$left} }) {
-        $debug_message .= "$delimiter$right";
+$debug > 1 && elog(DEBUG, "    7.4. successors:");
+foreach $left (sort keys %successors) {
+    my $tmp = "$left";
+    foreach $right ( @{ $successors{$left} }) {
+        $tmp .= "$delimiter$right";
     }
-    $debug_message .= "\n";
+    $debug > 1 && elog(DEBUG, "        7.4.1. $tmp");
 }
-$debug_message .= "predecessors:\n";
-foreach my $right (sort keys %predecessors) {
-    $debug_message .= "$right";
-    foreach my $right ( @{ $predecessors{$right} }) {
-        $debug_message .= "$delimiter$right";
+$debug > 1 && elog(DEBUG, "    7.5. predecessors:");
+foreach $right (sort keys %predecessors) {
+    my $tmp = "$right";
+    foreach $left ( @{ $predecessors{$right} }) {
+        $tmp .= "$delimiter$left";
     }
-    $debug_message .= "\n";
+    $debug > 1 && elog(DEBUG, "        7.5.1. $tmp");
 }
-$debug_message .= "sorted_nodes:\n";
-foreach my $node (@sorted_nodes) {
-    $debug_message .= "$node\n";
+$debug > 1 && elog(DEBUG, "    7.6. sorted_nodes:");
+foreach $node (@sorted_nodes) {
+    $debug > 1 && elog(DEBUG, "        7.6.1 $node");
 }
 
-$debug > 0 && elog(DEBUG, $debug_message);
-
-# Detect cycle
+# I. DETECT CYCLE
 if (grep {$num_predecessors{$_}} keys %num_predecessors) {
-    die "cycle detected $debug_message";
+    die "cycle detected";
 }
 
-return \@sorted_nodes;
+################################################################################
+# J. RETURN #2, ALL SORTED NODES                                               #
+################################################################################
+return \@sorted_nodes if $selection_mode eq 'ALL';
+################################################################################
+
+# K. FILTER OUTPUT BASED ON NODES
+
+my @filter_nodes;
+
+die "nodes is undefined or empty string" unless defined $selection_nodes && $selection_nodes ne '';
+
+# create nodes array, e.g. 'a b a c' -> ('a','b','a','c')
+my @init = split $delimiter, $selection_nodes;
+my %selection_nodes;
+@selection_nodes{@init} = @init;
+
+# find successors recursively (stolen from Graph::_all_successors)
+my $traverse = sub {
+    my ($init, $neighbours, $pairs) = @_;
+    my %todo;
+    @todo{@$init} = @$init;
+    my %found;
+    my %init = %todo;
+    my %self;
+    while (keys %todo) {
+        my @todo = values %todo;
+        for my $node (@todo) {
+            $found{$node} = delete $todo{$node};
+            foreach my $child (@{$neighbours->{$node}}) {
+                $self{$child} = $child if     exists $init{$child};
+                $todo{$child} = $child unless exists $found{$child};
+            }
+        }
+    }
+    for my $node (@$init) {
+      delete $found{$node} unless exists $pairs->{$node}{$node} || $self{$node};
+    }
+    return \%found;
+};
+
+$debug > 0 && elog(DEBUG, "8. find nodes connected to: " . join($delimiter,@init));
+my $nodes_successors   = &$traverse(\@init, \%successors,   \%pairs);
+my $nodes_predecessors = &$traverse(\@init, \%predecessors, \%pairs);
+$debug > 0 && elog(DEBUG, "    8.1. successors  : " . join($delimiter,sort keys %$nodes_successors));
+$debug > 0 && elog(DEBUG, "    8.2. predecessors: " . join($delimiter,sort keys %$nodes_predecessors));
+
+$debug > 0 && elog(DEBUG, "9. filter nodes:");
+foreach $node (@sorted_nodes) {
+    my $is_in_selection = 0;
+    if ($direction eq 'UP') {
+        $is_in_selection = exists $nodes_predecessors->{$node};
+    } elsif ($direction eq 'DOWN') {
+        $is_in_selection = exists $nodes_successors->{$node};
+    } elsif ($direction eq 'BOTH') {
+        $is_in_selection = exists $nodes_predecessors->{$node} || exists $nodes_successors->{$node};
+    } else {
+        die "invalid direction option: $direction";
+    }
+    $is_in_selection = 1 if $selection_mode eq 'CONN_INCL' && exists $selection_nodes{$node};
+
+    $debug > 1 && elog(DEBUG, "        9.1. node $node in selection: " . ($is_in_selection ? 'yes' : 'no'));
+
+    if ($operator eq 'INCLUDE') {
+        # $is_in_selection = $is_in_selection;
+    } elsif ($operator eq 'EXCLUDE') {
+        $is_in_selection = !$is_in_selection;
+    } else {
+        die "invalid operator option: $operator";
+    }
+    if ($is_in_selection ) {
+        $debug > 1 && elog(DEBUG, "        9.2. including $node");
+        push @filter_nodes, $node;
+    }
+}
+return \@filter_nodes;
 $BODY$ LANGUAGE plperl STABLE;
 
-SELECT tsort('a aa a ab aa aaa aa aab ab aba ab abb', ' ', NULL, NULL, NULL);
-SELECT tsort('a aa a ab aa aaa aa aab ab aba ab abb', ' ', NULL, NULL, 'DFS');
-SELECT tsort('a aa a ab aa aaa aa aab ab aba ab abb', ' ', NULL, NULL, 'BFS');
-SELECT tsort('a aa a ab aa aaa aa aab ab aba ab abb', ' ', NULL, NULL, 'sub {$a cmp $b}');
-SELECT tsort('a aa a ab aa aaa aa aab ab aba ab abb', ' ', NULL, NULL, 'sub {$b cmp $a}');
+
+-- Examples:
+SELECT tsort('a aa a ab aa aaa aa aab ab aba ab abb', ' ', NULL, NULL, NULL, NULL, NULL, NULL);
+SELECT tsort('a aa a ab aa aaa aa aab ab aba ab abb', ' ', 2, 'DFS', 'ab', 'CONN_INCL', 'INCLUDE', NULL);
+
+
+
 
