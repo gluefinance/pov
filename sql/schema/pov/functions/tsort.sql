@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, nodes text, selection text, operator text, direction text) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, operator text, nodes text, direction text) RETURNS TEXT[] AS $BODY$
 # tsort - return a tree's nodes in topological order
 
 # Code stolen from:
@@ -13,7 +13,7 @@ BEGIN {
     warnings->import();
 }
 # read input
-my ($edges_string, $delimiter, $debug, $algorithm, $selection_nodes, $selection_mode, $operator, $direction) = @_;
+my ($edges_string, $delimiter, $debug, $algorithm, $selection_mode, $operator, $selection_nodes, $direction) = @_;
 
 # set readme
 my $readme = '
@@ -22,8 +22,8 @@ tsort - return a tree\'s nodes in topological order
 
 
 SYNOPSIS
-SELECT tsort(edges text, delimiter text, debug integer, nodes text,
-    selection text, operator text, direction text, algorithm text);
+tsort(edges text, delimiter text, debug integer, algorithm text,
+selection text, operator text, nodes text, direction text);
 
 OUTPUT
     nodes       text[]  Array of nodes in topologically sorted order
@@ -75,10 +75,6 @@ INPUT PARAMETERS
 
     Parameter   Type    Regex     Description
     ============================================================================
-    nodes       text                List of [nodes] based on [selection]:
-                        NULL        not applicable (default)
-                        [nodes]     base [selection] on [nodes]
-
     selection   text                Selection of nodes, used by [operator]:
                         ALL         select all nodes (default)
                         ISOLATED    select nodes without any
@@ -97,13 +93,29 @@ INPUT PARAMETERS
                         INCLUDE     include nodes (default)
                         EXCLUDE     exclude nodes
 
-    direction   text                Only applicable if [nodes] is set:
+    The following options are only applicable if,
+    [selection] is CONN_INCL or CONN_EXCL
+
+    Parameter   Type    Regex     Description
+    ============================================================================
+
+    nodes       text                select nodes connected to [nodes]
+                        NULL        not applicable (default)
+                        [nodes]     the start nodes, separated by [delimiter]
+
+
+    direction   text                direction to look for connected nodes
                         BOTH        traverse both successors and
                                     predecessors (default)
                         UP          only traverse predecessors
                         DOWN        only traverse successors
 
 ';
+
+# SELECT tsort(); -- shows help
+if (defined $debug && $debug == -1) {
+    return [$readme];
+}
 
 # declare variables
 my $node;             # a node in the tree
@@ -218,9 +230,9 @@ if ($sort_sub) {
 # F. <--- RETURN #1, ISOLATED, SOURCE OR SINK NODES                            #
 ################################################################################
 $debug > 0 && elog(DEBUG, "5. return if algorithm is ISOLATED, SOURCE or SINK");
-return \@isolated_nodes if $selection_mode eq 'ISOLATED';
-return \@source_nodes   if $selection_mode eq 'SOURCE';
-return \@sink_nodes     if $selection_mode eq 'SINK';
+return \@isolated_nodes if $selection_mode eq 'ISOLATED' && $operator eq 'INCLUDE';
+return \@source_nodes   if $selection_mode eq 'SOURCE'   && $operator eq 'INCLUDE';
+return \@sink_nodes     if $selection_mode eq 'SINK'     && $operator eq 'INCLUDE';
 ################################################################################
 
 # G. EXECUTE TOPOLOGICAL SORT ALGORITHM
@@ -309,6 +321,11 @@ return \@sorted_nodes if $selection_mode eq 'ALL';
 
 my @filter_nodes;
 
+return \@isolated_nodes if $selection_mode eq 'ISOLATED' && $operator eq 'INCLUDE';
+return \@source_nodes   if $selection_mode eq 'SOURCE'   && $operator eq 'INCLUDE';
+return \@sink_nodes     if $selection_mode eq 'SINK'     && $operator eq 'INCLUDE';
+
+
 die "nodes is undefined or empty string" unless defined $selection_nodes && $selection_nodes ne '';
 
 # create nodes array, e.g. 'a b a c' -> ('a','b','a','c')
@@ -347,20 +364,36 @@ $debug > 0 && elog(DEBUG, "    8.1. successors  : " . join($delimiter,sort keys 
 $debug > 0 && elog(DEBUG, "    8.2. predecessors: " . join($delimiter,sort keys %$nodes_predecessors));
 
 $debug > 0 && elog(DEBUG, "9. filter nodes:");
+
+my %special_nodes;
+if ($selection_mode eq 'ISOLATED') {
+    @special_nodes{@isolated_nodes} = @isolated_nodes;
+} elsif ($selection_mode eq 'SOURCE') {
+    @special_nodes{@source_nodes} = @source_nodes;
+} elsif ($selection_mode eq 'SINK') {
+    @special_nodes{@sink_nodes} = @sink_nodes;
+}
+
+$debug > 0 && elog(DEBUG, "        9.1. special nodes: " . join $delimiter, keys %special_nodes );
+
 foreach $node (@sorted_nodes) {
     my $is_in_selection = 0;
-    if ($direction eq 'UP') {
-        $is_in_selection = exists $nodes_predecessors->{$node};
-    } elsif ($direction eq 'DOWN') {
-        $is_in_selection = exists $nodes_successors->{$node};
-    } elsif ($direction eq 'BOTH') {
-        $is_in_selection = exists $nodes_predecessors->{$node} || exists $nodes_successors->{$node};
-    } else {
-        die "invalid direction option: $direction";
+    if ($selection_mode eq 'CONN_INCL' || $selection_mode eq 'CONN_EXCL') {
+        if ($direction eq 'UP') {
+            $is_in_selection = exists $nodes_predecessors->{$node};
+        } elsif ($direction eq 'DOWN') {
+            $is_in_selection = exists $nodes_successors->{$node};
+        } elsif ($direction eq 'BOTH') {
+            $is_in_selection = exists $nodes_predecessors->{$node} || exists $nodes_successors->{$node};
+        } else {
+            die "invalid direction option: $direction";
+        }
+    } elsif (defined %special_nodes) {
+        $is_in_selection = exists $special_nodes{$node};
     }
     $is_in_selection = 1 if $selection_mode eq 'CONN_INCL' && exists $selection_nodes{$node};
 
-    $debug > 1 && elog(DEBUG, "        9.1. node $node in selection: " . ($is_in_selection ? 'yes' : 'no'));
+    $debug > 1 && elog(DEBUG, "        9.2. node $node in selection: " . ($is_in_selection ? 'yes' : 'no'));
 
     if ($operator eq 'INCLUDE') {
         # $is_in_selection = $is_in_selection;
@@ -370,18 +403,41 @@ foreach $node (@sorted_nodes) {
         die "invalid operator option: $operator";
     }
     if ($is_in_selection ) {
-        $debug > 1 && elog(DEBUG, "        9.2. including $node");
+        $debug > 1 && elog(DEBUG, "        9.3. including $node");
         push @filter_nodes, $node;
     }
 }
 return \@filter_nodes;
-$BODY$ LANGUAGE plperl STABLE;
+$BODY$ LANGUAGE plperl IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, nodes text, operator text) RETURNS TEXT[] AS $BODY$
+SELECT tsort($1,$2,$3,$4,$5,$6,$7,NULL);
+$BODY$ LANGUAGE sql IMMUTABLE;
 
--- Examples:
-SELECT tsort('a aa a ab aa aaa aa aab ab aba ab abb', ' ', NULL, NULL, NULL, NULL, NULL, NULL);
-SELECT tsort('a aa a ab aa aaa aa aab ab aba ab abb', ' ', 2, 'DFS', 'ab', 'CONN_INCL', 'INCLUDE', NULL);
+CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, nodes text) RETURNS TEXT[] AS $BODY$
+SELECT tsort($1,$2,$3,$4,$5,$6,NULL,NULL);
+$BODY$ LANGUAGE sql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text) RETURNS TEXT[] AS $BODY$
+SELECT tsort($1,$2,$3,$4,$5,NULL,NULL,NULL);
+$BODY$ LANGUAGE sql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text) RETURNS TEXT[] AS $BODY$
+SELECT tsort($1,$2,$3,$4,NULL,NULL,NULL,NULL);
+$BODY$ LANGUAGE sql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer) RETURNS TEXT[] AS $BODY$
+SELECT tsort($1,$2,$3,NULL,NULL,NULL,NULL,NULL);
+$BODY$ LANGUAGE sql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text) RETURNS TEXT[] AS $BODY$
+SELECT tsort($1,$2,NULL,NULL,NULL,NULL,NULL,NULL);
+$BODY$ LANGUAGE sql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text) RETURNS TEXT[] AS $BODY$
+SELECT tsort($1,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+$BODY$ LANGUAGE sql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION tsort(OUT help text) RETURNS TEXT AS $BODY$
+SELECT (tsort(NULL,NULL,-1,NULL,NULL,NULL,NULL,NULL))[1];
+$BODY$ LANGUAGE sql IMMUTABLE;
