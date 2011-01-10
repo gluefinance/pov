@@ -1070,14 +1070,10 @@ SELECT
         WHEN object.classoid = 'pg_opclass'::regclass     THEN 'operator class ' || cols.operator_class_name || ' for access method ' || cols.access_method_name
         WHEN object.classoid = 'pg_class'::regclass       THEN cols.relation_kind || ' ' || cols.namespace_name || '.' || cols.relation_name
         WHEN object.classoid = 'pg_type'::regclass        THEN 'type ' || cols.data_type_name
-        WHEN object.classoid = 'pg_proc'::regclass        THEN 'function ' || cols.namespace_name || '.' || cols.function_name || '(' || function_info.function_arguments || ')'
+        WHEN object.classoid = 'pg_proc'::regclass        THEN 'function ' || cols.namespace_name || '.' || cols.function_name || '(' || COALESCE(function_info.function_arguments,'') || ')'
     END || CASE WHEN object.classoid = 'pg_class'::regclass AND object.objsubid <> 0 THEN ' column ' || cols.attribute_name ELSE '' END
     AS identifier
 FROM object, cols, function_info
 )
-SELECT identifier FROM formatted_text
-;
+SELECT COALESCE((SELECT identifier FROM formatted_text), 'NULL')
 $BODY$ LANGUAGE sql STABLE;
-
-
-
