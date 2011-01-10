@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, operator text, nodes text, direction text) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, operator text, nodes text, direction text) RETURNS TEXT[] AS $BODY$
 # tsort - return a tree's nodes in topological order
 
 # Code stolen from:
@@ -118,24 +118,25 @@ if (defined $debug && $debug == -1) {
 }
 
 # declare variables
-my $node;             # a node in the tree
-my $left;             # left node in edge
-my $right;            # right node in edge
-my %pairs;            # hash, key=$left, value=hash which key=$right, i.e. $pairs{$left}{$right}
-my %num_predecessors; # hash, key=node, value=number of predecessors for node
-my %num_successors;   # hash, key=node, value=number of successors for node
-my %successors;       # hash, key=node, value=array of the successor nodes
-my %predecessors;     # hash, key=node, value=array of the predecessor nodes
-my @source_nodes;     # array of nodes with successors but no predecessors
-my @sink_nodes;       # array of nodes with predecessors but no successors
-my @isolated_nodes;   # array of nodes without any successors nor predecessors
-my @sorted_nodes;     # array of nodes in topologically sorted order (output variable)
+my $node;              # a node in the tree
+my $left;              # left node in edge
+my $right;             # right node in edge
+my %pairs;             # hash, key=$left, value=hash which key=$right, i.e. $pairs{$left}{$right}
+my %num_predecessors;  # hash, key=node, value=number of predecessors for node
+my %num_successors;    # hash, key=node, value=number of successors for node
+my %successors;        # hash, key=node, value=array of the successor nodes
+my %predecessors;      # hash, key=node, value=array of the predecessor nodes
+my @source_nodes;      # array of nodes with successors but no predecessors
+my %source_nodes_hash; # array of nodes with successors but no predecessors
+my @sink_nodes;        # array of nodes with predecessors but no successors
+my @isolated_nodes;    # array of nodes without any successors nor predecessors
+my @sorted_nodes;      # array of nodes in topologically sorted order (output variable)
 
 # validate input arguments
 die "edges is undefined\n\n$readme" unless defined $edges_string;
 die "invalid algorithm: $algorithm\n\n$readme"      if defined $algorithm      && $algorithm      !~ '^(DFS|BFS|ISOLATED|SOURCE|SINK|sub\s+{.+})$';
 die "invalid selection: $selection_mode\n\n$readme" if defined $selection_mode && $selection_mode !~ '^(ALL|ISOLATED|SOURCE|SINK|CONN_INCL|CONN_EXCL)$';
-die "invalid operator: $operator\n\n$readme"        if defined $operator       && $operator       !~ '^(INCLUDE|EXCLUDE)$';
+die "invalid operator: $operator\n\n$readme"        if defined $operator       && $operator       !~ '^(INCLUDE|EXCLUDE|SPLIT)$';
 die "invalid direction: $direction\n\n$readme"      if defined $direction      && $direction      !~ '^(BOTH|UP|DOWN)$';
 
 # set defaults
@@ -213,6 +214,7 @@ $debug > 0 && elog(DEBUG, "3. find isolated, source and sink nodes");
 @isolated_nodes = grep {!$num_predecessors{$_} && !$num_successors{$_}}   keys %num_predecessors;
 # find source nodes
 @source_nodes   = grep {!$num_predecessors{$_}}                           keys %num_predecessors;
+@source_nodes_hash{@source_nodes} = @source_nodes;
 # find sink nodes
 @sink_nodes     = grep {!$num_successors{$_}}                             keys %num_successors;
 
@@ -255,6 +257,9 @@ while (@nodes) {
     }
 
     $debug > 1 && elog(DEBUG, "    6.5. for each child to $node");
+    if ($operator eq 'SPLIT' && $source_nodes_hash{$node}) {
+        push @sorted_nodes, undef;
+    }
     push @sorted_nodes, $node;
     foreach my $child (@{$successors{$node}}) {
         if ($algorithm eq 'BFS') {
@@ -388,14 +393,14 @@ foreach $node (@sorted_nodes) {
         } else {
             die "invalid direction option: $direction";
         }
-    } elsif (defined %special_nodes) {
+    } elsif (keys %special_nodes > 0) {
         $is_in_selection = exists $special_nodes{$node};
     }
     $is_in_selection = 1 if $selection_mode eq 'CONN_INCL' && exists $selection_nodes{$node};
 
     $debug > 1 && elog(DEBUG, "        9.2. node $node in selection: " . ($is_in_selection ? 'yes' : 'no'));
 
-    if ($operator eq 'INCLUDE') {
+    if ($operator eq 'INCLUDE' || $operator eq 'SPLIT') {
         # $is_in_selection = $is_in_selection;
     } elsif ($operator eq 'EXCLUDE') {
         $is_in_selection = !$is_in_selection;
@@ -410,34 +415,34 @@ foreach $node (@sorted_nodes) {
 return \@filter_nodes;
 $BODY$ LANGUAGE plperl IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, nodes text, operator text) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, nodes text, operator text) RETURNS TEXT[] AS $BODY$
 SELECT tsort($1,$2,$3,$4,$5,$6,$7,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, nodes text) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, nodes text) RETURNS TEXT[] AS $BODY$
 SELECT tsort($1,$2,$3,$4,$5,$6,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text) RETURNS TEXT[] AS $BODY$
 SELECT tsort($1,$2,$3,$4,$5,NULL,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text) RETURNS TEXT[] AS $BODY$
 SELECT tsort($1,$2,$3,$4,NULL,NULL,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text, debug integer) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer) RETURNS TEXT[] AS $BODY$
 SELECT tsort($1,$2,$3,NULL,NULL,NULL,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text, delimiter text) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text) RETURNS TEXT[] AS $BODY$
 SELECT tsort($1,$2,NULL,NULL,NULL,NULL,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsort(OUT nodes text[], edges text) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text) RETURNS TEXT[] AS $BODY$
 SELECT tsort($1,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION tsort(OUT help text) RETURNS TEXT AS $BODY$
+CREATE OR REPLACE FUNCTION public.tsort(OUT help text) RETURNS TEXT AS $BODY$
 SELECT (tsort(NULL,NULL,-1,NULL,NULL,NULL,NULL,NULL))[1];
 $BODY$ LANGUAGE sql IMMUTABLE;
