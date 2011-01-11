@@ -272,7 +272,7 @@ NULL,
 NULL,
 NULL,
 NULL,
-NULL,
+pg_class.relname,
 NULL,
 pg_constraint.conname,
 NULL,
@@ -302,6 +302,7 @@ NULL
 FROM object
 JOIN pg_constraint ON (object.classoid = 'pg_constraint'::regclass AND pg_constraint.oid = object.objoid)
 JOIN pg_namespace  ON (object.classoid = 'pg_constraint'::regclass AND pg_namespace.oid  = pg_constraint.connamespace)
+LEFT JOIN pg_class ON (pg_constraint.conrelid = pg_class.oid)
 UNION ALL
 SELECT
 NULL,
@@ -444,7 +445,7 @@ NULL,
 NULL,
 NULL,
 NULL,
-format_type(pg_catalog.pg_type.oid,NULL),
+_format_type(pg_catalog.pg_type.oid,NULL),
 NULL,
 NULL,
 NULL,
@@ -482,7 +483,7 @@ NULL,
 NULL,
 NULL,
 NULL,
-format_type(pg_catalog.pg_type.oid,NULL),
+_format_type(pg_catalog.pg_type.oid,NULL),
 NULL,
 NULL,
 NULL,
@@ -522,8 +523,8 @@ NULL,
 NULL,
 NULL,
 NULL,
-format_type(pg_cast.castsource,NULL),
-format_type(pg_cast.casttarget,NULL),
+_format_type(pg_cast.castsource,NULL),
+_format_type(pg_cast.casttarget,NULL),
 NULL,
 NULL,
 NULL,
@@ -561,8 +562,8 @@ NULL,
 NULL,
 NULL,
 NULL,
-format_type(pg_operator.oprleft,NULL),
-format_type(pg_operator.oprright,NULL),
+_format_type(pg_operator.oprleft,NULL),
+_format_type(pg_operator.oprright,NULL),
 NULL,
 NULL,
 NULL,
@@ -826,8 +827,8 @@ NULL,
 NULL,
 NULL,
 NULL,
-format_type(pg_operator.oprleft,NULL),
-format_type(pg_operator.oprright,NULL),
+_format_type(pg_operator.oprleft,NULL),
+_format_type(pg_operator.oprright,NULL),
 NULL,
 NULL,
 NULL,
@@ -924,7 +925,7 @@ NULL,
 pg_attribute.attname,
 NULL,
 pg_class.relname,
-CASE pg_class.relkind WHEN 'c' THEN 'composite type' WHEN 'i' THEN 'index' WHEN 'r' THEN 'table' WHEN 't' THEN 'toast table' WHEN 'v' THEN 'view' END::text,
+CASE pg_class.relkind WHEN 'c' THEN 'composite type' WHEN 'i' THEN 'index' WHEN 'r' THEN 'table' WHEN 't' THEN 'toast table' WHEN 'v' THEN 'view' WHEN 'S' THEN 'sequence' END::text,
 NULL,
 NULL,
 NULL,
@@ -954,6 +955,46 @@ FROM object
 JOIN pg_class          ON (object.classoid = 'pg_class'::regclass AND pg_class.oid          = object.objoid)
 JOIN pg_namespace      ON (object.classoid = 'pg_class'::regclass AND pg_namespace.oid      = pg_class.relnamespace)
 LEFT JOIN pg_attribute ON (object.classoid = 'pg_class'::regclass AND pg_attribute.attrelid = pg_class.oid AND pg_attribute.attnum::integer = object.objsubid)
+UNION ALL
+SELECT
+NULL,
+NULL,
+NULL,
+NULL,
+pg_attribute.attname,
+NULL,
+pg_class.relname,
+CASE pg_class.relkind WHEN 'c' THEN 'composite type' WHEN 'i' THEN 'index' WHEN 'r' THEN 'table' WHEN 't' THEN 'toast table' WHEN 'v' THEN 'view' WHEN 'S' THEN 'sequence' END::text,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+pg_namespace.nspname,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL
+FROM object
+JOIN pg_attrdef   ON (object.classoid = 'pg_attrdef'::regclass AND pg_attrdef.oid      = object.objoid)
+JOIN pg_class     ON (object.classoid = 'pg_attrdef'::regclass AND pg_class.oid        = pg_attrdef.adrelid)
+JOIN pg_namespace ON (object.classoid = 'pg_attrdef'::regclass AND pg_namespace.oid      = pg_class.relnamespace)
+JOIN pg_attribute ON (object.classoid = 'pg_attrdef'::regclass AND pg_attribute.attrelid = pg_class.oid AND pg_attribute.attnum::integer = pg_attrdef.adnum)
 UNION ALL
 SELECT
 NULL,
@@ -1041,7 +1082,7 @@ function_argument_position AS (
     FROM pg_catalog.generate_series(1,(SELECT function_num_arguments FROM function_num_arguments)) AS function_argument_position
 ),
 function_args_in_order AS (
-    SELECT function_argument_position, format_type(cols.function_input_argument_types[function_argument_position-1],NULL) AS typname
+    SELECT function_argument_position, _format_type(cols.function_input_argument_types[function_argument_position-1],NULL) AS typname
     FROM function_argument_position, cols
     ORDER BY function_argument_position
 ),
@@ -1059,7 +1100,7 @@ SELECT
         WHEN object.classoid = 'pg_namespace'::regclass   THEN 'schema ' || cols.namespace_name
         WHEN object.classoid = 'pg_language'::regclass    THEN 'language ' || cols.language_name
         WHEN object.classoid = 'pg_conversion'::regclass  THEN 'conversion ' || cols.conversion_name
-        WHEN object.classoid = 'pg_constraint'::regclass  THEN 'constraint ' || cols.namespace_name || '.' || cols.constraint_name
+        WHEN object.classoid = 'pg_constraint'::regclass  THEN 'constraint ' || cols.namespace_name || '.' || cols.constraint_name || COALESCE(' on table ' || cols.relation_name,'')
         WHEN object.classoid = 'pg_rewrite'::regclass     THEN 'rule ' || cols.rule_name || ' on ' || cols.relation_kind || ' ' || cols.namespace_name || '.' || cols.relation_name
         WHEN object.classoid = 'pg_trigger'::regclass     THEN 'trigger ' || cols.trigger_name || ' on ' || cols.relation_kind || ' ' || cols.namespace_name || '.' || cols.relation_name
         WHEN object.classoid = 'pg_cast'::regclass        THEN 'cast from ' || cols.source_data_type_name || ' to ' || cols.target_data_type_name
@@ -1071,9 +1112,10 @@ SELECT
         WHEN object.classoid = 'pg_class'::regclass       THEN cols.relation_kind || ' ' || cols.namespace_name || '.' || cols.relation_name
         WHEN object.classoid = 'pg_type'::regclass        THEN 'type ' || cols.data_type_name
         WHEN object.classoid = 'pg_proc'::regclass        THEN 'function ' || cols.namespace_name || '.' || cols.function_name || '(' || COALESCE(function_info.function_arguments,'') || ')'
+        WHEN object.classoid = 'pg_attrdef'::regclass     THEN 'default for ' || cols.relation_kind || ' ' || cols.relation_name || ' column ' || cols.attribute_name
     END || CASE WHEN object.classoid = 'pg_class'::regclass AND object.objsubid <> 0 THEN ' column ' || cols.attribute_name ELSE '' END
     AS identifier
 FROM object, cols, function_info
 )
-SELECT COALESCE((SELECT identifier FROM formatted_text), 'NULL')
+SELECT identifier FROM formatted_text
 $BODY$ LANGUAGE sql STABLE;
