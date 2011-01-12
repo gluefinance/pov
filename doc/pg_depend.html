@@ -28,5 +28,64 @@
                 <tr><td><a href="pg_depend/pg_depend_actual.svg">pg_depend/pg_depend_actual.svg</a></td><td>SVG generated using GraphViz with pg_depend_actual.dot as input</td></tr>
             </table>
         </div>
+        <div>
+            <pre>
+
+Result of tsort:
+* sequence s1 1259.23359
+* function f1(integer) 1255.23358
+* table t3 1259.23371
+* table t1 1259.23353
+* view v1 1259.23378
+* table t2 1259.23361
+* view v2 1259.23382
+* view v3 1259.23386
+* view v4 1259.23390
+
+All objects:
+ constraint t3_pkey on table t3 2606.23377
+ index t3_pkey 1259.23376
+ schema public 2615.2200
+* sequence s1 1259.23359
+ type s1 1247.23360
+ default for table t3 column id 2604.23374
+* function f1(integer) 1255.23358
+ constraint t3_id_check on table t3 2606.23375
+* table t3 1259.23371
+ type t3 1247.23373
+ type t3[] 1247.23372
+ constraint t1_pkey on table t1 2606.23357
+ index t1_pkey 1259.23356
+* table t1 1259.23353
+ type t1 1247.23355
+ type t1[] 1247.23354
+ constraint t2_id_fkey on table t2 2606.23366
+ trigger RI_ConstraintTrigger_23369 on table t1 2620.23369
+ trigger RI_ConstraintTrigger_23367 on table t2 2620.23367
+ trigger RI_ConstraintTrigger_23370 on table t1 2620.23370
+ trigger RI_ConstraintTrigger_23368 on table t2 2620.23368
+ rule _RETURN on view v1 2618.23381
+* view v1 1259.23378
+ type v1 1247.23380
+ type v1[] 1247.23379
+ constraint t2_pkey on table t2 2606.23365
+* table t2 1259.23361
+ type t2 1247.23363
+ type t2[] 1247.23362
+ rule _RETURN on view v2 2618.23385
+* view v2 1259.23382
+ type v2 1247.23384
+ type v2[] 1247.23383
+ rule _RETURN on view v3 2618.23389
+* view v3 1259.23386
+ rule _RETURN on view v4 2618.23393
+* view v4 1259.23390
+ type v4 1247.23392
+ type v4[] 1247.23391
+ type v3 1247.23388
+ type v3[] 1247.23387
+ index t2_pkey 1259.23364
+            </pre>
+        </div>
     </body>
 </html>
