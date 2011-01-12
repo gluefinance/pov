@@ -66,3 +66,56 @@ SELECT '}'
 )
 SELECT * FROM DotFormat;
 
+-- Swap normal-internal and automatic edges
+WITH
+NewObjectOids AS (
+    SELECT * FROM pg_depend WHERE deptype <> 'p'
+    EXCEPT
+    SELECT * FROM pg_depend_before
+),
+NewObjectOidsAggDepType AS (
+    SELECT classid,objid,objsubid,refclassid,refobjid,refobjsubid,array_to_string(array_agg(deptype),'') AS deptype
+    FROM NewObjectOids GROUP BY classid,objid,objsubid,refclassid,refobjid,refobjsubid
+),
+NewObjects AS (
+SELECT
+    CASE WHEN DepType ~ '^(a|ni|in|an|na)$' THEN
+        pg_describe_object(classid,objid,0)       || ' ' || classid    || '.' || objid
+    ELSE
+        pg_describe_object(refclassid,refobjid,0) || ' ' || refclassid || '.' || refobjid
+    END AS RefObj,
+    CASE WHEN DepType ~ '^(a|ni|in|an|na)$' THEN
+        pg_describe_object(refclassid,refobjid,0) || ' ' || refclassid || '.' || refobjid
+    ELSE
+        pg_describe_object(classid,objid,0)       || ' ' || classid    || '.' || objid
+    END AS Obj,
+    DepType
+FROM NewObjectOidsAggDepType
+),
+DepDigraph AS (
+SELECT DISTINCT RefObj, Obj, DepType FROM NewObjects
+WHERE RefObj <> Obj
+),
+DotFormat AS (
+SELECT 'digraph pg_depend {' AS diagraph
+UNION ALL
+SELECT '    "'
+    || RefObj
+    || '" -> "'
+    || Obj
+    || '" [' || CASE
+                WHEN array_to_string(array_agg(DepType),'') = 'n'         THEN 'color=black'
+                WHEN array_to_string(array_agg(DepType),'') = 'i'         THEN 'color=red'
+                WHEN array_to_string(array_agg(DepType),'') = 'a'         THEN 'color=blue'
+                WHEN array_to_string(array_agg(DepType),'') ~ '^(ni|in)$' THEN 'color=green'
+                WHEN array_to_string(array_agg(DepType),'') ~ '^(na|an)$' THEN 'color=yellow'
+                ELSE 'style=dotted'
+                END
+    || ' label=' || array_to_string(array_agg(DepType),'') || ']'
+FROM DepDigraph GROUP BY RefObj, Obj
+UNION ALL
+SELECT '}'
+),
+TopoSort AS (SELECT unnest FROM unnest((SELECT tsort(array_to_string(array_agg(RefObj || ';' || Obj),';'),';',2) FROM DepDigraph)))
+SELECT * FROM TopoSort;
+
