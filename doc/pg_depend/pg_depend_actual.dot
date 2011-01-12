@@ -1,0 +1,17 @@
+digraph pg_depend {
+    "schema public 2615.2200" -> "table t1 1259.23312"
+    "schema public 2615.2200" -> "function f1(integer) 1255.23339"
+    "schema public 2615.2200" -> "sequence s1 1259.23344"
+
+    "table t1 1259.23312" -> "table t2 1259.23317"
+    "function f1(integer) 1255.23339" -> "table t3 1259.23346"
+
+    "table t1 1259.23312" -> "view v1 1259.23327"
+    "table t2 1259.23317" -> "view v2 1259.23331"
+
+    "view v1 1259.23327" -> "view v3 1259.23335"
+    "view v2 1259.23331" -> "view v3 1259.23335"
+
+    "view v3 1259.23335" -> "view v4 1259.23340"
+    "function f1(integer) 1255.23339" -> "view v4 1259.23340"
+}
