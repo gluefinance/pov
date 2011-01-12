@@ -1,0 +1,31 @@
+<html>
+    <head>
+        <title>pg_depend problem</title>
+    </head>
+    <body>
+        <p>In the example, pg_depend.sql, we want to reach the following conclusions in an algorithmic way, only by using pg_depend as in-data:</p>
+        <ol>
+            <li>table t1, function f1, sequence s1 have no dependencies, other than the public schema</li>
+            <li>table t2 depends on t1 and table t3 depends on f1</li>
+            <li>view v1 depends on t1 and view v2 depends on t2</li>
+            <li>view v3 depends on both v1 and v2</li>
+            <li>view v4 depends on v3 and f1</li>
+        </ol>
+        <p>The topological tree automatically generated from the data in pg_depend is presented in pg_depend.dot, pg_depend.svg and pg_depend.png.</p>
+        <p>The actual topological tree (possible order of creation) created manually is presented in pg_depend_actual.dot, pg_depend_actual.svg and pg_depend_actual.png.</p>
+        <p>The automatically created objects, such as primary key indexes, constraints and triggers, have been ignored in this graph, as they are implicitly created when creating the "base objects".</p>
+        <p>CHALLENGE: Define a general algorithm taking ONLY the pg_depend data as input, generating a valid topological directional graph, including at least the nodes in pg_depend_actual.dot, but might as well include all nodes, although it is not necessary, it's certainly won't hurt.</p>
+        <p>It will be necessary to look not only at the nodes (objects) and edges (obj->refobj), but also the deptype for each edge.</p>
+        <div>
+            <table>
+                <tr><th>file</th><th>description</th></tr>
+                <tr><td><a href="pg_depend/pg_depend.dot">pg_depend/pg_depend.dot</a></td><td>Digraph in DOT language (plaintext format), generated automatically only by using data from pg_data.</td></tr>
+                <tr><td><a href="pg_depend/pg_depend.png">pg_depend/pg_depend.png</a></td><td>PNG generated using GraphViz with pg_depend.dot as input</td></tr>
+                <tr><td><a href="pg_depend/pg_depend.svg">pg_depend/pg_depend.png</a></td><td>SVG generated using GraphViz with pg_depend.dot as input</td></tr>
+                <tr><td><a href="pg_depend/pg_depend_actual.dot">pg_depend/pg_depend_actual.dot</a></td><td>Digraph in DOT language (plaintext format), generated manually, shows the actual possible order of creation, only including the "base objects".</td></tr>
+                <tr><td><a href="pg_depend/pg_depend_actual.png">pg_depend/pg_depend_actual.png</a></td><td>PNG generated using GraphViz with pg_depend_actual.dot as input</td></tr>
+                <tr><td><a href="pg_depend/pg_depend_actual.svg">pg_depend/pg_depend_actual.png</a></td><td>SVG generated using GraphViz with pg_depend_actual.dot as input</td></tr>
+            </table>
+        </div>
+    </body>
+</html>
