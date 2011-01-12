@@ -20,6 +20,12 @@ CREATE VIEW v3 AS SELECT v1.id AS id1, v2.id AS id2 FROM v1, v2;
 -- Dependency level 5:
 CREATE VIEW v4 AS SELECT *, f1(id1) FROM v3;
 
+-- Circular dependencies:
+CREATE TABLE tselfref  ( id int not null PRIMARY KEY, parentid int not null REFERENCES tselfref(id) );
+CREATE TABLE tcircular ( id int not null PRIMARY KEY, id2      int not null REFERENCES tselfref(id) );
+ALTER TABLE  tselfref ADD COLUMN id2 int not null REFERENCES tcircular ( id );
+
+
 -- Generate .dot file, pg_depend.dot contains the output of the query
 WITH
 NewObjectOids AS (
