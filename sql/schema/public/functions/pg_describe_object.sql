@@ -8,7 +8,7 @@ CREATE OR REPLACE FUNCTION public.pg_describe_object(oid, oid, integer) RETURNS 
 WITH
 object             AS (SELECT $1::oid AS classoid, $2::oid AS objoid, $3::integer AS objsubid),
 cols AS (
-SELECT * FROM pov.pg_unique_object_columns WHERE classid = $1 AND objid = $2 AND objsubid = $3
+SELECT * FROM pov.pg_unique_object_columns($1,$2,$3)
 ),
 function_num_arguments AS (
     SELECT array_upper(cols.function_input_argument_types,1)+1 AS function_num_arguments FROM cols
