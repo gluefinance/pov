@@ -1,3 +1,6 @@
+-- View of all objects and their respective unique columns.
+-- It is guaranteed no two objects in the database can share the exact same values of all unique columns,
+-- thanks to the unique index for each object class.
 CREATE OR REPLACE VIEW pov.pg_all_objects_unique_columns AS
 SELECT
 'pg_foreign_data_wrapper'::regclass::text AS class_name,
