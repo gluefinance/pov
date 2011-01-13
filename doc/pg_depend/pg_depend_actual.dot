@@ -1,23 +1,48 @@
 digraph pg_depend {
-    "schema public 2615.2200" -> "table t1 1259.23312"
-    "schema public 2615.2200" -> "function f1(integer) 1255.23339"
-    "schema public 2615.2200" -> "sequence s1 1259.23344"
+    "schema public" -> "table t1"
+    "table t1" -> "constraint t1_pkey" [type=a]
 
-    "table t1 1259.23312" -> "table t2 1259.23317"
-    "function f1(integer) 1255.23339" -> "table t3 1259.23346"
+    "schema public" -> "function f1(integer)"
+    "schema public" -> "sequence s1"
 
-    "table t1 1259.23312" -> "view v1 1259.23327"
-    "table t2 1259.23317" -> "view v2 1259.23331"
+    "table t1" -> "table t2"
+    "table t2" -> "constraint t2_pkey" [type=a]
 
-    "view v1 1259.23327" -> "view v3 1259.23335"
-    "view v2 1259.23331" -> "view v3 1259.23335"
+    "function f1(integer)" -> "table t3"
+    "function f1(integer)" -> "constraint t3_id_check on table t3" [type=a]
 
-    "view v3 1259.23335" -> "view v4 1259.23340"
-    "function f1(integer) 1255.23339" -> "view v4 1259.23340"
+    "table t3" -> "constraint t3_pkey"
+    "table t3" -> "constraint t3_pkey"
+    "table t3" -> "constraint t3_pkey"
+    "table t3" -> "constraint t3_pkey"
 
-    "schema public 2615.2200" -> "table tselfref 1259.23405"
-    "table tselfref 1259.23405" -> "table tselfref 1259.23405" [style=dotted]
 
-    "table tselfref 1259.23405" -> "table tcircular 1259.23415"
-    "table tcircular 1259.23415" -> "table tselfref 1259.23405" [style=dotted]
+    "table t1" -> "view v1"
+    "table t2" -> "view v2"
+
+    "view v1" -> "view v3"
+    "view v2" -> "view v3"
+
+    "view v3" -> "view v4"
+    "function f1(integer)" -> "view v4"
 }
+
+
+-- Dependency level 1 (directly under public schema:)
+CREATE TABLE t1 ( id integer, PRIMARY KEY (id) );
+CREATE FUNCTION f1 ( integer ) RETURNS boolean AS $$ SELECT $1 > 1; $$ LANGUAGE sql;
+CREATE SEQUENCE s1;
+
+-- Dependency level 2:
+CREATE TABLE t2 ( id integer, PRIMARY KEY (id), FOREIGN KEY (id) REFERENCES t1(id) );
+CREATE TABLE t3 ( id integer not null default nextval('s1'), PRIMARY KEY (id), CHECK(f1(id)) );
+
+-- Dependency level 3:
+CREATE VIEW v1 AS SELECT * FROM t1;
+CREATE VIEW v2 AS SELECT * FROM t2;
+
+-- Dependency level 4:
+CREATE VIEW v3 AS SELECT v1.id AS id1, v2.id AS id2 FROM v1, v2;
+
+-- Dependency level 5:
+CREATE VIEW v4 AS SELECT *, f1(id1) FROM v3;

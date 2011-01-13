@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, operator text, nodes text, direction text) RETURNS TEXT[] AS $BODY$
+CREATE OR REPLACE FUNCTION pov.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, operator text, nodes text, direction text) RETURNS TEXT[] AS $BODY$
 # tsort - return a tree's nodes in topological order
 
 # Code stolen from:
@@ -112,7 +112,7 @@ INPUT PARAMETERS
 
 ';
 
-# SELECT tsort(); -- shows help
+# SELECT pov.tsort(); -- shows help
 if (defined $debug && $debug == -1) {
     return [$readme];
 }
@@ -415,34 +415,34 @@ foreach $node (@sorted_nodes) {
 return \@filter_nodes;
 $BODY$ LANGUAGE plperl IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, nodes text, operator text) RETURNS TEXT[] AS $BODY$
-SELECT tsort($1,$2,$3,$4,$5,$6,$7,NULL);
+CREATE OR REPLACE FUNCTION pov.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, nodes text, operator text) RETURNS TEXT[] AS $BODY$
+SELECT pov.tsort($1,$2,$3,$4,$5,$6,$7,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, nodes text) RETURNS TEXT[] AS $BODY$
-SELECT tsort($1,$2,$3,$4,$5,$6,NULL,NULL);
+CREATE OR REPLACE FUNCTION pov.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, nodes text) RETURNS TEXT[] AS $BODY$
+SELECT pov.tsort($1,$2,$3,$4,$5,$6,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text) RETURNS TEXT[] AS $BODY$
-SELECT tsort($1,$2,$3,$4,$5,NULL,NULL,NULL);
+CREATE OR REPLACE FUNCTION pov.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text) RETURNS TEXT[] AS $BODY$
+SELECT pov.tsort($1,$2,$3,$4,$5,NULL,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text) RETURNS TEXT[] AS $BODY$
-SELECT tsort($1,$2,$3,$4,NULL,NULL,NULL,NULL);
+CREATE OR REPLACE FUNCTION pov.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text) RETURNS TEXT[] AS $BODY$
+SELECT pov.tsort($1,$2,$3,$4,NULL,NULL,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text, debug integer) RETURNS TEXT[] AS $BODY$
-SELECT tsort($1,$2,$3,NULL,NULL,NULL,NULL,NULL);
+CREATE OR REPLACE FUNCTION pov.tsort(OUT nodes text[], edges text, delimiter text, debug integer) RETURNS TEXT[] AS $BODY$
+SELECT pov.tsort($1,$2,$3,NULL,NULL,NULL,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text, delimiter text) RETURNS TEXT[] AS $BODY$
-SELECT tsort($1,$2,NULL,NULL,NULL,NULL,NULL,NULL);
+CREATE OR REPLACE FUNCTION pov.tsort(OUT nodes text[], edges text, delimiter text) RETURNS TEXT[] AS $BODY$
+SELECT pov.tsort($1,$2,NULL,NULL,NULL,NULL,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION public.tsort(OUT nodes text[], edges text) RETURNS TEXT[] AS $BODY$
-SELECT tsort($1,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+CREATE OR REPLACE FUNCTION pov.tsort(OUT nodes text[], edges text) RETURNS TEXT[] AS $BODY$
+SELECT pov.tsort($1,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 $BODY$ LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION public.tsort(OUT help text) RETURNS TEXT AS $BODY$
-SELECT (tsort(NULL,NULL,-1,NULL,NULL,NULL,NULL,NULL))[1];
+CREATE OR REPLACE FUNCTION pov.tsort(OUT help text) RETURNS TEXT AS $BODY$
+SELECT (pov.tsort(NULL,NULL,-1,NULL,NULL,NULL,NULL,NULL))[1];
 $BODY$ LANGUAGE sql IMMUTABLE;
