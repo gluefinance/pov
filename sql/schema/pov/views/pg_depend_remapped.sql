@@ -1,3 +1,7 @@
+-- Author: Joel Jacobson, Glue Finance AB, Sweden, <joel@gluefinance.com>
+-- Datestamp: 2011-01-13 23:42 Europe/Stockholm
+-- License: MIT (http://www.opensource.org/licenses/mit-license.php)
+--
 -- This view folds the internal linkages in pg_depend and replaces them
 -- with a links to the objects they belong to.
 --
@@ -35,6 +39,7 @@ SELECT
     deptype
 FROM pg_catalog.pg_depend
 UNION
+-- Add dependencies from "main object" (objsubid=0) to sub object (objsubid>0):
 SELECT
     refclassid || '.' || refobjid || '.' || 0 AS from_obj,
     refclassid || '.' || refobjid || '.' || refobjsubid AS to_obj,

@@ -1,6 +1,10 @@
 CREATE OR REPLACE FUNCTION pov.tsort(OUT nodes text[], edges text, delimiter text, debug integer, algorithm text, selection text, operator text, nodes text, direction text) RETURNS TEXT[] AS $BODY$
 # tsort - return a tree's nodes in topological order
-
+#
+# Author: Joel Jacobson, Glue Finance AB, Sweden, <joel@gluefinance.com>
+# Datestamp: 2011-01-13 23:42 Europe/Stockholm
+# License: MIT (http://www.opensource.org/licenses/mit-license.php)
+#
 # Code stolen from:
 # Don Knuth (I<Art of Computer Programming, volume 1: Fundamental Algorithms>, Section 2.2.3)
 #  \- Jon Bentley (I<More Programming Pearls>, pp. 20-23)

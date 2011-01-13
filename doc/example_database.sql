@@ -1,0 +1,167 @@
+-- This is an example of some functionality provided and used by pov (PostgreSQL Object version control system).
+-- Most of, if not all, this stuff has already been implemented in pg_dump,
+-- but since pov is a SQL-based system it was necessary to implement the same functionality
+-- using only sql/plpgsql/plperl.
+--
+-- Author: Joel Jacobson, Glue Finance AB, Sweden, <joel@gluefinance.com>
+-- Datestamp: 2011-01-13 23:42 Europe/Stockholm
+-- License: MIT (http://www.opensource.org/licenses/mit-license.php)
+--
+-- We will learn how to do a lot of PostgreSQL-magic only by using the nice system table "pg_depend".
+-- Today we will,
+-- a) create nice directional graphs of all object dependencies,
+-- b) sort all objects in a truly sorted topological creatable order,
+-- c) show create/drop commands for most of the objects.
+--
+-- Let the show begin!
+--
+-- Installation:
+-- CREATE DATABASE test;
+-- \c
+-- CREATE SCHEMA pov;
+-- CREATE LANGUAGE plperl;
+-- CREATE LANGUAGE plpgsql;
+--
+-- If you don't have 
+--
+-- Create the simple database structure below, or test on your own database model (which is probably more fun).
+--
+-- Dependency level 1 (directly under public schema:)
+CREATE TABLE t1 ( id integer, PRIMARY KEY (id) );
+CREATE FUNCTION f1 ( integer ) RETURNS boolean AS $$ SELECT $1 > 1; $$ LANGUAGE sql;
+CREATE SEQUENCE s1;
+
+-- Dependency level 2:
+CREATE TABLE t2 ( id integer, PRIMARY KEY (id), FOREIGN KEY (id) REFERENCES t1(id) );
+CREATE TABLE t3 ( id integer not null default nextval('s1'), PRIMARY KEY (id), CHECK(f1(id)) );
+
+-- Dependency level 3:
+CREATE VIEW v1 AS SELECT * FROM t1;
+CREATE VIEW v2 AS SELECT * FROM t2;
+
+-- Dependency level 4:
+CREATE VIEW v3 AS SELECT v1.id AS id1, v2.id AS id2 FROM v1, v2;
+
+-- Dependency level 5:
+CREATE VIEW v4 AS SELECT *, f1(id1) FROM v3;
+
+-- a) Generate directional graph in DOT-format.
+-- COPY (SELECT diagraph FROM pov.pg_depend_dot) TO '/tmp/example_database.dot';
+--
+-- Then use the dot (http://www.graphviz.org/) to generate graphs in svg, png, or any format.
+-- dot -oexample_database.png -Tpng example_database.dot
+-- dot -oexample_database.svg -Tsvg example_database.dot
+--
+-- Or view it in the SQL prompt:
+--
+-- test=# select * from pov.pg_depend_dot;
+--                                                           diagraph                                                           
+-- -----------------------------------------------------------------------------------------------------------------------------
+--  digraph pg_depend {
+--      "function plpgsql_call_handler() 1255.11599.0" -> "language plpgsql 2612.11602.0" [color=black label=n]
+--      "function plpgsql_inline_handler(internal) 1255.11600.0" -> "language plpgsql 2612.11602.0" [color=black label=n]
+--      "function plpgsql_validator(oid) 1255.11601.0" -> "language plpgsql 2612.11602.0" [color=black label=n]
+--      "function plperl_call_handler() 1255.23562.0" -> "language plperl 2612.23565.0" [color=black label=n]
+--      "function plperl_inline_handler(internal) 1255.23563.0" -> "language plperl 2612.23565.0" [color=black label=n]
+--      "function plperl_validator(oid) 1255.23564.0" -> "language plperl 2612.23565.0" [color=black label=n]
+--      "function f1(integer) 1255.23656.0" -> "view v4 1259.23688.0" [color=black label=n]
+--      "function f1(integer) 1255.23656.0" -> "constraint t3_id_check on table t3 2606.23673.0" [color=black label=n]
+--      "table t1 1259.23651.0" -> "table t1 column id 1259.23651.1" [color=yellow label=an]
+--      "table t1 column id 1259.23651.1" -> "view v1 1259.23676.0" [color=black label=n]
+--      "table t1 column id 1259.23651.1" -> "constraint t1_pkey on table t1 2606.23655.0" [color=blue label=a]
+--      "table t1 column id 1259.23651.1" -> "constraint t2_id_fkey on table t2 2606.23664.0" [color=black label=n]
+--      "sequence s1 1259.23657.0" -> "default for table t3 column id 2604.23672.0" [color=black label=n]
+--      "table t2 1259.23659.0" -> "table t2 column id 1259.23659.1" [color=yellow label=an]
+--      "table t2 column id 1259.23659.1" -> "view v2 1259.23680.0" [color=black label=n]
+--      "table t2 column id 1259.23659.1" -> "constraint t2_pkey on table t2 2606.23663.0" [color=blue label=a]
+--      "table t2 column id 1259.23659.1" -> "constraint t2_id_fkey on table t2 2606.23664.0" [color=blue label=a]
+--      "table t3 1259.23669.0" -> "table t3 column id 1259.23669.1" [color=yellow label=an]
+--      "table t3 column id 1259.23669.1" -> "default for table t3 column id 2604.23672.0" [color=blue label=a]
+--      "table t3 column id 1259.23669.1" -> "constraint t3_id_check on table t3 2606.23673.0" [color=yellow label=na]
+--      "table t3 column id 1259.23669.1" -> "constraint t3_pkey on table t3 2606.23675.0" [color=blue label=a]
+--      "view v1 1259.23676.0" -> "view v1 column id 1259.23676.1" [color=black label=n]
+--      "view v1 column id 1259.23676.1" -> "view v3 1259.23684.0" [color=black label=n]
+--      "view v2 1259.23680.0" -> "view v2 column id 1259.23680.1" [color=black label=n]
+--      "view v2 column id 1259.23680.1" -> "view v3 1259.23684.0" [color=black label=n]
+--      "view v3 1259.23684.0" -> "view v3 column id1 1259.23684.1" [color=black label=n]
+--      "view v3 1259.23684.0" -> "view v3 column id2 1259.23684.2" [color=black label=n]
+--      "view v3 column id1 1259.23684.1" -> "view v4 1259.23688.0" [color=black label=n]
+--      "view v3 column id2 1259.23684.2" -> "view v4 1259.23688.0" [color=black label=n]
+--      "constraint t1_pkey on table t1 2606.23655.0" -> "constraint t2_id_fkey on table t2 2606.23664.0" [color=black label=n]
+--      "schema public 2615.2200.0" -> "function f1(integer) 1255.23656.0" [color=black label=n]
+--      "schema public 2615.2200.0" -> "table t1 1259.23651.0" [color=black label=n]
+--      "schema public 2615.2200.0" -> "sequence s1 1259.23657.0" [color=black label=n]
+--      "schema public 2615.2200.0" -> "table t2 1259.23659.0" [color=black label=n]
+--      "schema public 2615.2200.0" -> "table t3 1259.23669.0" [color=black label=n]
+--      "schema public 2615.2200.0" -> "view v1 1259.23676.0" [color=black label=n]
+--      "schema public 2615.2200.0" -> "view v2 1259.23680.0" [color=black label=n]
+--      "schema public 2615.2200.0" -> "view v3 1259.23684.0" [color=black label=n]
+--      "schema public 2615.2200.0" -> "view v4 1259.23688.0" [color=black label=n]
+--  }
+-- (41 rows)
+
+-- b) Sort all objects in lexically sorted order.
+--
+-- test=# select * from pov.pg_depend_tsort ;
+--  row_number |                description                | classid | objid | objsubid 
+-- ------------+-------------------------------------------+---------+-------+----------
+--           1 | function plperl_call_handler()            |    1255 | 23562 |        0
+--           2 | function plperl_inline_handler(internal)  |    1255 | 23563 |        0
+--           3 | function plperl_validator(oid)            |    1255 | 23564 |        0
+--           4 | function plpgsql_call_handler()           |    1255 | 11599 |        0
+--           5 | function plpgsql_inline_handler(internal) |    1255 | 11600 |        0
+--           6 | function plpgsql_validator(oid)           |    1255 | 11601 |        0
+--           7 | language plperl                           |    2612 | 23565 |        0
+--           8 | language plpgsql                          |    2612 | 11602 |        0
+--           9 | schema public                             |    2615 |  2200 |        0
+--          10 | function f1(integer)                      |    1255 | 23656 |        0
+--          11 | sequence s1                               |    1259 | 23657 |        0
+--          12 | table t1                                  |    1259 | 23651 |        0
+--          13 | table t1 column id                        |    1259 | 23651 |        1
+--          14 | constraint t1_pkey on table t1            |    2606 | 23655 |        0
+--          15 | table t2                                  |    1259 | 23659 |        0
+--          16 | table t2 column id                        |    1259 | 23659 |        1
+--          17 | constraint t2_id_fkey on table t2         |    2606 | 23664 |        0
+--          18 | constraint t2_pkey on table t2            |    2606 | 23663 |        0
+--          19 | table t3                                  |    1259 | 23669 |        0
+--          20 | table t3 column id                        |    1259 | 23669 |        1
+--          21 | constraint t3_id_check on table t3        |    2606 | 23673 |        0
+--          22 | constraint t3_pkey on table t3            |    2606 | 23675 |        0
+--          23 | default for table t3 column id            |    2604 | 23672 |        0
+--          24 | view v1                                   |    1259 | 23676 |        0
+--          25 | view v1 column id                         |    1259 | 23676 |        1
+--          26 | view v2                                   |    1259 | 23680 |        0
+--          27 | view v2 column id                         |    1259 | 23680 |        1
+--          28 | view v3                                   |    1259 | 23684 |        0
+--          29 | view v3 column id1                        |    1259 | 23684 |        1
+--          30 | view v3 column id2                        |    1259 | 23684 |        2
+--          31 | view v4                                   |    1259 | 23688 |        0
+-- (31 rows)
+--
+-- c) Get create/drop commands for most of the objects:
+--
+-- test=# select * from pov.pg_depend_definitions ;
+--  row_number |            description             | classid | objid | objsubid |                                 create_definition                                  |                    drop_definition   
+--                   
+-- ------------+------------------------------------+---------+-------+----------+------------------------------------------------------------------------------------+--------------------------------------------------------
+--           7 | language plperl                    |    2612 | 23565 |        0 | CREATE LANGUAGE plperl                                                             | DROP LANGUAGE plperl
+--           8 | language plpgsql                   |    2612 | 11602 |        0 | CREATE LANGUAGE plpgsql                                                            | DROP LANGUAGE plpgsql
+--           9 | schema public                      |    2615 |  2200 |        0 | CREATE SCHEMA public;ALTER SCHEMA public OWNER TO ubuntu                           | DROP SCHEMA public
+--          10 | function f1(integer)               |    1255 | 23656 |        0 | CREATE OR REPLACE FUNCTION public.f1(integer)                                     +| DROP FUNCTION public.f1(integer)
+--             |                                    |         |       |          |  RETURNS boolean                                                                  +| 
+--             |                                    |         |       |          |  LANGUAGE sql                                                                     +| 
+--             |                                    |         |       |          | AS $function$ SELECT $1 > 1; $function$                                           +| 
+--             |                                    |         |       |          | ;ALTER FUNCTION public.f1(integer) OWNER TO postgres                               | 
+--          13 | table t1 column id                 |    1259 | 23651 |        1 | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'                             | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'
+--          14 | constraint t1_pkey on table t1     |    2606 | 23655 |        0 | ALTER TABLE public.t1 ADD CONSTRAINT t1_pkey PRIMARY KEY (id)                      | ALTER TABLE public.t1 DROP CONSTRAINT t1_pkey
+--          16 | table t2 column id                 |    1259 | 23659 |        1 | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'                             | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'
+--          17 | constraint t2_id_fkey on table t2  |    2606 | 23664 |        0 | ALTER TABLE public.t2 ADD CONSTRAINT t2_id_fkey FOREIGN KEY (id) REFERENCES t1(id) | ALTER TABLE public.t2 DROP CONSTRAINT t2_id_fkey
+--          18 | constraint t2_pkey on table t2     |    2606 | 23663 |        0 | ALTER TABLE public.t2 ADD CONSTRAINT t2_pkey PRIMARY KEY (id)                      | ALTER TABLE public.t2 DROP CONSTRAINT t2_pkey
+--          20 | table t3 column id                 |    1259 | 23669 |        1 | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'                             | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'
+--          21 | constraint t3_id_check on table t3 |    2606 | 23673 |        0 | ALTER TABLE public.t3 ADD CONSTRAINT t3_id_check CHECK (f1(id))                    | ALTER TABLE public.t3 DROP CONSTRAINT t3_id_check
+--          22 | constraint t3_pkey on table t3     |    2606 | 23675 |        0 | ALTER TABLE public.t3 ADD CONSTRAINT t3_pkey PRIMARY KEY (id)                      | ALTER TABLE public.t3 DROP CONSTRAINT t3_pkey
+--          25 | view v1 column id                  |    1259 | 23676 |        1 | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'                             | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'
+--          27 | view v2 column id                  |    1259 | 23680 |        1 | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'                             | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'
+--          29 | view v3 column id1                 |    1259 | 23684 |        1 | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'                             | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'
+--          30 | view v3 column id2                 |    1259 | 23684 |        2 | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'                             | RAISE EXCEPTION 'Sorry, pg_class is not supported yet'
+-- (16 rows)

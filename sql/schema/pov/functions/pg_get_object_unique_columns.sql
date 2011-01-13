@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION pov.pg_unique_object_columns(
+CREATE OR REPLACE FUNCTION pov.pg_get_object_unique_columns(
 IN oid,
 IN oid,
 IN integer,

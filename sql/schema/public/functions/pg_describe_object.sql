@@ -1,10 +1,6 @@
 -- SQL version of the pg_catalog.pg_describe_object function,
 -- for those of us not running PostgreSQL 9.
 --
-CREATE OR REPLACE FUNCTION public.pg_describe_object(text) RETURNS TEXT AS $BODY$
-SELECT pg_describe_object(split_part($1,'.',1)::oid, split_part($1,'.',2)::oid, CASE split_part($1,'.',3) WHEN '' THEN 0 ELSE split_part($1,'.',3)::integer END) || ' ' || $1
-$BODY$ LANGUAGE sql STABLE;
-
 CREATE OR REPLACE FUNCTION public.pg_describe_object(oid, oid, integer) RETURNS TEXT AS $BODY$
 WITH
 object             AS (SELECT $1::oid AS classoid, $2::oid AS objoid, $3::integer AS objsubid),
