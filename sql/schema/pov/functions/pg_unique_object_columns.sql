@@ -41,12 +41,15 @@ OUT text_search_parser_name name,
 OUT text_search_template_name name
 ) RETURNS RECORD AS $BODY$
 WITH
+object AS (
+SELECT $1 AS class_id, $2 AS object_id, $3 AS object_sub_id
+),
 object_info AS (
 SELECT
-$1::regclass::text              AS class_name,
-$1::oid                         AS classid,
-$2::oid                         AS objid,
-$3::integer                     AS objsubid,
+object.class_id::regclass::text AS class_name,
+object.class_id::oid            AS classid,
+object.object_id::oid           AS objid,
+object.object_sub_id::integer   AS objsubid,
 NULL::name                      AS access_method_name,
 NULL::int2                      AS operator_strategy_number,
 NULL::int2                      AS support_function_number,
@@ -81,13 +84,13 @@ NULL::name                      AS text_search_dictionary_name,
 NULL::name                      AS text_search_parser_name,
 NULL::name                      AS text_search_template_name
 FROM object
-JOIN pg_foreign_data_wrapper ON ($1 = 'pg_foreign_data_wrapper'::regclass AND pg_foreign_data_wrapper.oid = $2)
+JOIN pg_foreign_data_wrapper ON (object.class_id = 'pg_foreign_data_wrapper'::regclass AND pg_foreign_data_wrapper.oid = object.object_id)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -122,13 +125,13 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_authid               ON ($1 = 'pg_authid'::regclass               AND pg_authid.oid               = $2)
+JOIN pg_authid               ON (object.class_id = 'pg_authid'::regclass               AND pg_authid.oid               = object.object_id)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -163,13 +166,13 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_foreign_server       ON ($1 = 'pg_foreign_server'::regclass       AND pg_foreign_server.oid       = $2)
+JOIN pg_foreign_server       ON (object.class_id = 'pg_foreign_server'::regclass       AND pg_foreign_server.oid       = object.object_id)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 pg_am.amname,
 NULL,
 NULL,
@@ -204,13 +207,13 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_am                   ON ($1 = 'pg_am'::regclass                   AND pg_am.oid                   = $2)
+JOIN pg_am                   ON (object.class_id = 'pg_am'::regclass                   AND pg_am.oid                   = object.object_id)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -245,13 +248,13 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_namespace            ON ($1 = 'pg_namespace'::regclass            AND pg_namespace.oid            = $2)
+JOIN pg_namespace            ON (object.class_id = 'pg_namespace'::regclass            AND pg_namespace.oid            = object.object_id)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -286,13 +289,13 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_tablespace           ON ($1 = 'pg_tablespace'::regclass           AND pg_tablespace.oid           = $2)
+JOIN pg_tablespace           ON (object.class_id = 'pg_tablespace'::regclass           AND pg_tablespace.oid           = object.object_id)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -327,15 +330,15 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_user_mapping         ON ($1 = 'pg_user_mapping'::regclass AND pg_user_mapping.oid   = $2)
-JOIN pg_authid               ON ($1 = 'pg_user_mapping'::regclass AND pg_authid.oid         = pg_user_mapping.umuser)
-JOIN pg_foreign_server       ON ($1 = 'pg_user_mapping'::regclass AND pg_foreign_server.oid = pg_user_mapping.umserver)
+JOIN pg_user_mapping         ON (object.class_id = 'pg_user_mapping'::regclass AND pg_user_mapping.oid   = object.object_id)
+JOIN pg_authid               ON (object.class_id = 'pg_user_mapping'::regclass AND pg_authid.oid         = pg_user_mapping.umuser)
+JOIN pg_foreign_server       ON (object.class_id = 'pg_user_mapping'::regclass AND pg_foreign_server.oid = pg_user_mapping.umserver)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -370,15 +373,15 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_constraint ON ($1 = 'pg_constraint'::regclass AND pg_constraint.oid = $2)
-JOIN pg_namespace  ON ($1 = 'pg_constraint'::regclass AND pg_namespace.oid  = pg_constraint.connamespace)
+JOIN pg_constraint ON (object.class_id = 'pg_constraint'::regclass AND pg_constraint.oid = object.object_id)
+JOIN pg_namespace  ON (object.class_id = 'pg_constraint'::regclass AND pg_namespace.oid  = pg_constraint.connamespace)
 LEFT JOIN pg_class ON (pg_constraint.conrelid = pg_class.oid)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -413,14 +416,14 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_conversion ON ($1 = 'pg_conversion'::regclass AND pg_conversion.oid = $2)
-JOIN pg_namespace  ON ($1 = 'pg_conversion'::regclass AND pg_namespace.oid  = pg_conversion.connamespace)
+JOIN pg_conversion ON (object.class_id = 'pg_conversion'::regclass AND pg_conversion.oid = object.object_id)
+JOIN pg_namespace  ON (object.class_id = 'pg_conversion'::regclass AND pg_namespace.oid  = pg_conversion.connamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 pg_am.amname,
 NULL,
 NULL,
@@ -455,15 +458,15 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_opclass   ON ($1 = 'pg_opclass'::regclass AND pg_opclass.oid   = $2)
-JOIN pg_am        ON ($1 = 'pg_opclass'::regclass AND pg_am.oid        = pg_opclass.opcmethod)
-JOIN pg_namespace ON ($1 = 'pg_opclass'::regclass AND pg_namespace.oid = pg_opclass.opcnamespace)
+JOIN pg_opclass   ON (object.class_id = 'pg_opclass'::regclass AND pg_opclass.oid   = object.object_id)
+JOIN pg_am        ON (object.class_id = 'pg_opclass'::regclass AND pg_am.oid        = pg_opclass.opcmethod)
+JOIN pg_namespace ON (object.class_id = 'pg_opclass'::regclass AND pg_namespace.oid = pg_opclass.opcnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 pg_am.amname,
 NULL,
 NULL,
@@ -498,15 +501,15 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_opfamily  ON ($1 = 'pg_opfamily'::regclass AND pg_opfamily.oid  = $2)
-JOIN pg_am        ON ($1 = 'pg_opfamily'::regclass AND pg_am.oid        = pg_opfamily.opfmethod)
-JOIN pg_namespace ON ($1 = 'pg_opfamily'::regclass AND pg_namespace.oid = pg_opfamily.opfnamespace)
+JOIN pg_opfamily  ON (object.class_id = 'pg_opfamily'::regclass AND pg_opfamily.oid  = object.object_id)
+JOIN pg_am        ON (object.class_id = 'pg_opfamily'::regclass AND pg_am.oid        = pg_opfamily.opfmethod)
+JOIN pg_namespace ON (object.class_id = 'pg_opfamily'::regclass AND pg_namespace.oid = pg_opfamily.opfnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -541,14 +544,14 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_type      ON ($1 = 'pg_type'::regclass AND pg_type.oid      = $2)
-JOIN pg_namespace ON ($1 = 'pg_type'::regclass AND pg_namespace.oid = pg_type.typnamespace)
+JOIN pg_type      ON (object.class_id = 'pg_type'::regclass AND pg_type.oid      = object.object_id)
+JOIN pg_namespace ON (object.class_id = 'pg_type'::regclass AND pg_namespace.oid = pg_type.typnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -583,15 +586,15 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_enum      ON ($1 = 'pg_enum'::regclass AND pg_enum.oid      = $2)
-JOIN pg_type      ON ($1 = 'pg_enum'::regclass AND pg_type.oid      = pg_enum.enumtypid)
-JOIN pg_namespace ON ($1 = 'pg_enum'::regclass AND pg_namespace.oid = pg_type.typnamespace)
+JOIN pg_enum      ON (object.class_id = 'pg_enum'::regclass AND pg_enum.oid      = object.object_id)
+JOIN pg_type      ON (object.class_id = 'pg_enum'::regclass AND pg_type.oid      = pg_enum.enumtypid)
+JOIN pg_namespace ON (object.class_id = 'pg_enum'::regclass AND pg_namespace.oid = pg_type.typnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -626,13 +629,13 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_cast ON ($1 = 'pg_cast'::regclass AND pg_cast.oid = $2)
+JOIN pg_cast ON (object.class_id = 'pg_cast'::regclass AND pg_cast.oid = object.object_id)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -667,14 +670,14 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_operator  ON ($1 = 'pg_operator'::regclass AND pg_operator.oid  = $2)
-JOIN pg_namespace ON ($1 = 'pg_operator'::regclass AND pg_namespace.oid = pg_operator.oprnamespace)
+JOIN pg_operator  ON (object.class_id = 'pg_operator'::regclass AND pg_operator.oid  = object.object_id)
+JOIN pg_namespace ON (object.class_id = 'pg_operator'::regclass AND pg_namespace.oid = pg_operator.oprnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -709,13 +712,13 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_language ON ($1 = 'pg_language'::regclass AND pg_language.oid = $2)
+JOIN pg_language ON (object.class_id = 'pg_language'::regclass AND pg_language.oid = object.object_id)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -750,14 +753,14 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_proc      ON ($1 = 'pg_proc'::regclass AND pg_proc.oid      = $2)
-JOIN pg_namespace ON ($1 = 'pg_proc'::regclass AND pg_namespace.oid = pg_proc.pronamespace)
+JOIN pg_proc      ON (object.class_id = 'pg_proc'::regclass AND pg_proc.oid      = object.object_id)
+JOIN pg_namespace ON (object.class_id = 'pg_proc'::regclass AND pg_namespace.oid = pg_proc.pronamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -792,14 +795,14 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_ts_config ON ($1 = 'pg_ts_config'::regclass AND pg_ts_config.oid = $2)
-JOIN pg_namespace ON ($1 = 'pg_ts_config'::regclass AND pg_namespace.oid = pg_ts_config.cfgnamespace)
+JOIN pg_ts_config ON (object.class_id = 'pg_ts_config'::regclass AND pg_ts_config.oid = object.object_id)
+JOIN pg_namespace ON (object.class_id = 'pg_ts_config'::regclass AND pg_namespace.oid = pg_ts_config.cfgnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -834,14 +837,14 @@ pg_ts_dict.dictname,
 NULL,
 NULL
 FROM object
-JOIN pg_ts_dict   ON ($1 = 'pg_ts_dict'::regclass AND pg_ts_dict.oid   = $2)
-JOIN pg_namespace ON ($1 = 'pg_ts_dict'::regclass AND pg_namespace.oid = pg_ts_dict.dictnamespace)
+JOIN pg_ts_dict   ON (object.class_id = 'pg_ts_dict'::regclass AND pg_ts_dict.oid   = object.object_id)
+JOIN pg_namespace ON (object.class_id = 'pg_ts_dict'::regclass AND pg_namespace.oid = pg_ts_dict.dictnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -876,14 +879,14 @@ NULL,
 pg_ts_parser.prsname,
 NULL
 FROM object
-JOIN pg_ts_parser ON ($1 = 'pg_ts_parser'::regclass AND pg_ts_parser.oid = $2)
-JOIN pg_namespace ON ($1 = 'pg_ts_parser'::regclass AND pg_namespace.oid = pg_ts_parser.prsnamespace)
+JOIN pg_ts_parser ON (object.class_id = 'pg_ts_parser'::regclass AND pg_ts_parser.oid = object.object_id)
+JOIN pg_namespace ON (object.class_id = 'pg_ts_parser'::regclass AND pg_namespace.oid = pg_ts_parser.prsnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -918,14 +921,14 @@ NULL,
 NULL,
 pg_ts_template.tmplname
 FROM object
-JOIN pg_ts_template ON ($1 = 'pg_ts_template'::regclass AND pg_ts_template.oid = $2)
-JOIN pg_namespace   ON ($1 = 'pg_ts_template'::regclass AND pg_namespace.oid   = pg_ts_template.tmplnamespace)
+JOIN pg_ts_template ON (object.class_id = 'pg_ts_template'::regclass AND pg_ts_template.oid = object.object_id)
+JOIN pg_namespace   ON (object.class_id = 'pg_ts_template'::regclass AND pg_namespace.oid   = pg_ts_template.tmplnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 pg_am.amname,
 pg_amop.amopstrategy,
 NULL,
@@ -960,17 +963,17 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_amop                             ON ($1 = 'pg_amop'::regclass AND pg_amop.oid      = $2)
-JOIN pg_opfamily                         ON ($1 = 'pg_amop'::regclass AND pg_opfamily.oid  = pg_amop.amopfamily)
-JOIN pg_am                               ON ($1 = 'pg_amop'::regclass AND pg_am.oid        = pg_opfamily.opfmethod)
-JOIN pg_operator                         ON ($1 = 'pg_amop'::regclass AND pg_operator.oid  = pg_amop.amopopr)
-JOIN pg_namespace                        ON ($1 = 'pg_amop'::regclass AND pg_namespace.oid = pg_operator.oprnamespace AND pg_namespace.oid = pg_opfamily.opfnamespace)
+JOIN pg_amop                             ON (object.class_id = 'pg_amop'::regclass AND pg_amop.oid      = object.object_id)
+JOIN pg_opfamily                         ON (object.class_id = 'pg_amop'::regclass AND pg_opfamily.oid  = pg_amop.amopfamily)
+JOIN pg_am                               ON (object.class_id = 'pg_amop'::regclass AND pg_am.oid        = pg_opfamily.opfmethod)
+JOIN pg_operator                         ON (object.class_id = 'pg_amop'::regclass AND pg_operator.oid  = pg_amop.amopopr)
+JOIN pg_namespace                        ON (object.class_id = 'pg_amop'::regclass AND pg_namespace.oid = pg_operator.oprnamespace AND pg_namespace.oid = pg_opfamily.opfnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 pg_am.amname,
 NULL,
 pg_amproc.amprocnum,
@@ -1005,16 +1008,16 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_amproc               ON ($1 = 'pg_amproc'::regclass AND pg_amproc.oid               = $2)
-JOIN pg_opfamily             ON ($1 = 'pg_amproc'::regclass AND pg_opfamily.oid             = pg_amproc.amprocfamily)
-JOIN pg_am                   ON ($1 = 'pg_amproc'::regclass AND pg_am.oid                   = pg_opfamily.opfmethod)
-JOIN pg_namespace            ON ($1 = 'pg_amproc'::regclass AND pg_namespace.oid            = pg_opfamily.opfnamespace)
+JOIN pg_amproc               ON (object.class_id = 'pg_amproc'::regclass AND pg_amproc.oid               = object.object_id)
+JOIN pg_opfamily             ON (object.class_id = 'pg_amproc'::regclass AND pg_opfamily.oid             = pg_amproc.amprocfamily)
+JOIN pg_am                   ON (object.class_id = 'pg_amproc'::regclass AND pg_am.oid                   = pg_opfamily.opfmethod)
+JOIN pg_namespace            ON (object.class_id = 'pg_amproc'::regclass AND pg_namespace.oid            = pg_opfamily.opfnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -1049,13 +1052,13 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_database ON ($1 = 'pg_database'::regclass AND pg_database.oid = $2)
+JOIN pg_database ON (object.class_id = 'pg_database'::regclass AND pg_database.oid = object.object_id)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -1090,15 +1093,15 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_class          ON ($1 = 'pg_class'::regclass AND pg_class.oid          = $2)
-JOIN pg_namespace      ON ($1 = 'pg_class'::regclass AND pg_namespace.oid      = pg_class.relnamespace)
-LEFT JOIN pg_attribute ON ($1 = 'pg_class'::regclass AND pg_attribute.attrelid = pg_class.oid AND pg_attribute.attnum::integer = $3)
+JOIN pg_class          ON (object.class_id = 'pg_class'::regclass AND pg_class.oid          = object.object_id)
+JOIN pg_namespace      ON (object.class_id = 'pg_class'::regclass AND pg_namespace.oid      = pg_class.relnamespace)
+LEFT JOIN pg_attribute ON (object.class_id = 'pg_class'::regclass AND pg_attribute.attrelid = pg_class.oid AND pg_attribute.attnum::integer = object.object_sub_id)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -1133,16 +1136,16 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_attrdef   ON ($1 = 'pg_attrdef'::regclass AND pg_attrdef.oid      = $2)
-JOIN pg_class     ON ($1 = 'pg_attrdef'::regclass AND pg_class.oid        = pg_attrdef.adrelid)
-JOIN pg_namespace ON ($1 = 'pg_attrdef'::regclass AND pg_namespace.oid      = pg_class.relnamespace)
-JOIN pg_attribute ON ($1 = 'pg_attrdef'::regclass AND pg_attribute.attrelid = pg_class.oid AND pg_attribute.attnum::integer = pg_attrdef.adnum)
+JOIN pg_attrdef   ON (object.class_id = 'pg_attrdef'::regclass AND pg_attrdef.oid      = object.object_id)
+JOIN pg_class     ON (object.class_id = 'pg_attrdef'::regclass AND pg_class.oid        = pg_attrdef.adrelid)
+JOIN pg_namespace ON (object.class_id = 'pg_attrdef'::regclass AND pg_namespace.oid      = pg_class.relnamespace)
+JOIN pg_attribute ON (object.class_id = 'pg_attrdef'::regclass AND pg_attribute.attrelid = pg_class.oid AND pg_attribute.attnum::integer = pg_attrdef.adnum)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -1177,15 +1180,15 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_rewrite   ON ($1 = 'pg_rewrite'::regclass AND pg_rewrite.oid   = $2)
-JOIN pg_class     ON ($1 = 'pg_rewrite'::regclass AND pg_class.oid     = pg_rewrite.ev_class)
-JOIN pg_namespace ON ($1 = 'pg_rewrite'::regclass AND pg_namespace.oid = pg_class.relnamespace)
+JOIN pg_rewrite   ON (object.class_id = 'pg_rewrite'::regclass AND pg_rewrite.oid   = object.object_id)
+JOIN pg_class     ON (object.class_id = 'pg_rewrite'::regclass AND pg_class.oid     = pg_rewrite.ev_class)
+JOIN pg_namespace ON (object.class_id = 'pg_rewrite'::regclass AND pg_namespace.oid = pg_class.relnamespace)
 UNION ALL
 SELECT
-$1::regclass::text,
-$1,
-$2,
-$3,
+object.class_id::regclass::text,
+object.class_id,
+object.object_id,
+object.object_sub_id,
 NULL,
 NULL,
 NULL,
@@ -1220,9 +1223,9 @@ NULL,
 NULL,
 NULL
 FROM object
-JOIN pg_trigger   ON ($1 = 'pg_trigger'::regclass AND pg_trigger.oid   = $2)
-JOIN pg_class     ON ($1 = 'pg_trigger'::regclass AND pg_class.oid     = pg_trigger.tgrelid)
-JOIN pg_namespace ON ($1 = 'pg_trigger'::regclass AND pg_namespace.oid = pg_class.relnamespace)
+JOIN pg_trigger   ON (object.class_id = 'pg_trigger'::regclass AND pg_trigger.oid   = object.object_id)
+JOIN pg_class     ON (object.class_id = 'pg_trigger'::regclass AND pg_class.oid     = pg_trigger.tgrelid)
+JOIN pg_namespace ON (object.class_id = 'pg_trigger'::regclass AND pg_namespace.oid = pg_class.relnamespace)
 )
 SELECT * FROM object_info;
 $BODY$ LANGUAGE sql STABLE;
