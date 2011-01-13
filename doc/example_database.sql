@@ -16,15 +16,37 @@
 -- Let the show begin!
 --
 -- Installation:
--- CREATE DATABASE test;
--- \c
--- CREATE SCHEMA pov;
--- CREATE LANGUAGE plperl;
--- CREATE LANGUAGE plpgsql;
 --
--- If you don't have 
+-- $ git clone git@github.com:gluefinance/pov.git
+-- $ cd pov
+-- $ sh install_example_database.sh
 --
--- Create the simple database structure below, or test on your own database model (which is probably more fun).
+-- # This will create the database "test" and a simple schema,
+-- # you can of course test the functions on your real database instead,
+-- # which is probably more fun.
+--
+-- ubuntu@ubuntu:~/pov$ sh install_example_database.sh 
+-- CREATE SCHEMA
+-- CREATE LANGUAGE
+-- psql:sql/install_example_database.sql:3: ERROR:  language "plpgsql" already exists
+-- CREATE FUNCTION
+-- CREATE FUNCTION
+-- CREATE FUNCTION
+-- CREATE FUNCTION
+-- CREATE FUNCTION
+-- CREATE FUNCTION
+-- CREATE FUNCTION
+-- CREATE FUNCTION
+-- CREATE FUNCTION
+-- CREATE FUNCTION
+-- CREATE FUNCTION
+-- CREATE VIEW
+-- CREATE VIEW
+-- CREATE VIEW
+-- CREATE VIEW
+-- CREATE VIEW
+-- CREATE VIEW
+-- Installed!
 --
 -- Dependency level 1 (directly under public schema:)
 CREATE TABLE t1 ( id integer, PRIMARY KEY (id) );
