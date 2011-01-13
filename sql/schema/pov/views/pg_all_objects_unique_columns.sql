@@ -1148,7 +1148,8 @@ NULL,
 NULL,
 NULL,
 NULL,
-NULL pg_trigger
+NULL
+FROM pg_trigger
 JOIN pg_class     ON (pg_class.oid     = pg_trigger.tgrelid)
 JOIN pg_namespace ON (pg_namespace.oid = pg_class.relnamespace)
 ;
