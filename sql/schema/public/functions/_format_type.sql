@@ -1,0 +1,3 @@
+CREATE OR REPLACE FUNCTION _format_type(oid, integer) RETURNS TEXT AS $BODY$
+SELECT CASE WHEN $1 = 0 THEN 'NONE' ELSE format_type($1, $2) END;
+$BODY$ LANGUAGE sql STABLE;
