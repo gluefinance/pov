@@ -1160,7 +1160,7 @@ JOIN pg_trigger   ON (object.classid = 'pg_trigger'::regclass AND pg_trigger.oid
 JOIN pg_class     ON (object.classid = 'pg_trigger'::regclass AND pg_class.oid     = pg_trigger.tgrelid)
 JOIN pg_namespace ON (object.classid = 'pg_trigger'::regclass AND pg_namespace.oid = pg_class.relnamespace)
 )
-SELECT * FROM view_objects;
+SELECT * FROM object_info;
 
 
 
