@@ -1,3 +1,4 @@
+DROP VIEW view_objects;
 CREATE OR REPLACE VIEW view_objects AS
 WITH
 object AS (
@@ -7,6 +8,7 @@ SELECT refclassid, refobjid, refobjsubid FROM pg_depend
 ),
 object_info AS (
 SELECT
+object.classid::regclass        AS class_name,
 object.classid::oid             AS classid,
 object.objid::oid               AS objid,
 object.objsubid::integer        AS objsubid,
@@ -47,6 +49,7 @@ FROM object
 JOIN pg_foreign_data_wrapper ON (object.classid = 'pg_foreign_data_wrapper'::regclass AND pg_foreign_data_wrapper.oid = object.objid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -87,6 +90,7 @@ FROM object
 JOIN pg_authid               ON (object.classid = 'pg_authid'::regclass               AND pg_authid.oid               = object.objid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -127,6 +131,7 @@ FROM object
 JOIN pg_foreign_server       ON (object.classid = 'pg_foreign_server'::regclass       AND pg_foreign_server.oid       = object.objid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -167,6 +172,7 @@ FROM object
 JOIN pg_am                   ON (object.classid = 'pg_am'::regclass                   AND pg_am.oid                   = object.objid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -207,6 +213,7 @@ FROM object
 JOIN pg_namespace            ON (object.classid = 'pg_namespace'::regclass            AND pg_namespace.oid            = object.objid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -247,6 +254,7 @@ FROM object
 JOIN pg_tablespace           ON (object.classid = 'pg_tablespace'::regclass           AND pg_tablespace.oid           = object.objid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -289,6 +297,7 @@ JOIN pg_authid               ON (object.classid = 'pg_user_mapping'::regclass AN
 JOIN pg_foreign_server       ON (object.classid = 'pg_user_mapping'::regclass AND pg_foreign_server.oid = pg_user_mapping.umserver)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -331,6 +340,7 @@ JOIN pg_namespace  ON (object.classid = 'pg_constraint'::regclass AND pg_namespa
 LEFT JOIN pg_class ON (pg_constraint.conrelid = pg_class.oid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -372,6 +382,7 @@ JOIN pg_conversion ON (object.classid = 'pg_conversion'::regclass AND pg_convers
 JOIN pg_namespace  ON (object.classid = 'pg_conversion'::regclass AND pg_namespace.oid  = pg_conversion.connamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -414,6 +425,7 @@ JOIN pg_am        ON (object.classid = 'pg_opclass'::regclass AND pg_am.oid     
 JOIN pg_namespace ON (object.classid = 'pg_opclass'::regclass AND pg_namespace.oid = pg_opclass.opcnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -456,6 +468,7 @@ JOIN pg_am        ON (object.classid = 'pg_opfamily'::regclass AND pg_am.oid    
 JOIN pg_namespace ON (object.classid = 'pg_opfamily'::regclass AND pg_namespace.oid = pg_opfamily.opfnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -497,6 +510,7 @@ JOIN pg_type      ON (object.classid = 'pg_type'::regclass AND pg_type.oid      
 JOIN pg_namespace ON (object.classid = 'pg_type'::regclass AND pg_namespace.oid = pg_type.typnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -539,6 +553,7 @@ JOIN pg_type      ON (object.classid = 'pg_enum'::regclass AND pg_type.oid      
 JOIN pg_namespace ON (object.classid = 'pg_enum'::regclass AND pg_namespace.oid = pg_type.typnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -579,6 +594,7 @@ FROM object
 JOIN pg_cast ON (object.classid = 'pg_cast'::regclass AND pg_cast.oid = object.objid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -620,6 +636,7 @@ JOIN pg_operator  ON (object.classid = 'pg_operator'::regclass AND pg_operator.o
 JOIN pg_namespace ON (object.classid = 'pg_operator'::regclass AND pg_namespace.oid = pg_operator.oprnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -660,6 +677,7 @@ FROM object
 JOIN pg_language ON (object.classid = 'pg_language'::regclass AND pg_language.oid = object.objid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -701,6 +719,7 @@ JOIN pg_proc      ON (object.classid = 'pg_proc'::regclass AND pg_proc.oid      
 JOIN pg_namespace ON (object.classid = 'pg_proc'::regclass AND pg_namespace.oid = pg_proc.pronamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -742,6 +761,7 @@ JOIN pg_ts_config ON (object.classid = 'pg_ts_config'::regclass AND pg_ts_config
 JOIN pg_namespace ON (object.classid = 'pg_ts_config'::regclass AND pg_namespace.oid = pg_ts_config.cfgnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -783,6 +803,7 @@ JOIN pg_ts_dict   ON (object.classid = 'pg_ts_dict'::regclass AND pg_ts_dict.oid
 JOIN pg_namespace ON (object.classid = 'pg_ts_dict'::regclass AND pg_namespace.oid = pg_ts_dict.dictnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -824,6 +845,7 @@ JOIN pg_ts_parser ON (object.classid = 'pg_ts_parser'::regclass AND pg_ts_parser
 JOIN pg_namespace ON (object.classid = 'pg_ts_parser'::regclass AND pg_namespace.oid = pg_ts_parser.prsnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -865,6 +887,7 @@ JOIN pg_ts_template ON (object.classid = 'pg_ts_template'::regclass AND pg_ts_te
 JOIN pg_namespace   ON (object.classid = 'pg_ts_template'::regclass AND pg_namespace.oid   = pg_ts_template.tmplnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -909,6 +932,7 @@ JOIN pg_operator                         ON (object.classid = 'pg_amop'::regclas
 JOIN pg_namespace                        ON (object.classid = 'pg_amop'::regclass AND pg_namespace.oid = pg_operator.oprnamespace AND pg_namespace.oid = pg_opfamily.opfnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -952,6 +976,7 @@ JOIN pg_am                   ON (object.classid = 'pg_amproc'::regclass AND pg_a
 JOIN pg_namespace            ON (object.classid = 'pg_amproc'::regclass AND pg_namespace.oid            = pg_opfamily.opfnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -992,6 +1017,7 @@ FROM object
 JOIN pg_database ON (object.classid = 'pg_database'::regclass AND pg_database.oid = object.objid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -1034,6 +1060,7 @@ JOIN pg_namespace      ON (object.classid = 'pg_class'::regclass AND pg_namespac
 LEFT JOIN pg_attribute ON (object.classid = 'pg_class'::regclass AND pg_attribute.attrelid = pg_class.oid AND pg_attribute.attnum::integer = object.objsubid)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -1077,6 +1104,7 @@ JOIN pg_namespace ON (object.classid = 'pg_attrdef'::regclass AND pg_namespace.o
 JOIN pg_attribute ON (object.classid = 'pg_attrdef'::regclass AND pg_attribute.attrelid = pg_class.oid AND pg_attribute.attnum::integer = pg_attrdef.adnum)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
@@ -1119,6 +1147,7 @@ JOIN pg_class     ON (object.classid = 'pg_rewrite'::regclass AND pg_class.oid  
 JOIN pg_namespace ON (object.classid = 'pg_rewrite'::regclass AND pg_namespace.oid = pg_class.relnamespace)
 UNION ALL
 SELECT
+object.classid::regclass,
 object.classid,
 object.objid,
 object.objsubid,
