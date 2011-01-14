@@ -76,12 +76,6 @@ AND (
     OR
     pov.pg_all_objects_unique_columns.namespace_name NOT IN ('pg_catalog','information_schema','pg_toast','pov')
 )
-AND (
-    pov.pg_all_objects_unique_columns.function_name IS NULL
-    OR
-    pov.pg_all_objects_unique_columns.namespace_name IS NULL
-    OR
-    (pov.pg_all_objects_unique_columns.function_name <> 'pov' OR pov.pg_all_objects_unique_columns.namespace_name <> 'public')
-)
+AND pov.pg_depend_tsort.description NOT IN ('view public.view_snapshots','function public.pov()','function public.pov(bigint)')
 ORDER BY pov.pg_depend_tsort.row_number
 ;
