@@ -76,7 +76,7 @@ SET LOCAL search_path TO pov;
 
 SELECT ObjectIDs INTO _CurrentObjectIDs FROM Revisions WHERE RevisionID = _CurrentRevisionID;
 IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERROR_FSNAPSHOT_REVISION_NOT_FOUND RevisionID %', _CurrentRevisionID;
+    RAISE EXCEPTION 'ERROR_POV_REVISION_NOT_FOUND RevisionID %', _CurrentRevisionID;
 END IF;
 
 -- Lookup RevisionID and ObjectIDs for SnapshotID to restore
@@ -84,7 +84,7 @@ SELECT Snapshots.RevisionID, Revisions.ObjectIDs INTO _RevisionID, _ObjectIDs FR
 INNER JOIN Revisions ON (Revisions.RevisionID = Snapshots.RevisionID)
 WHERE Snapshots.SnapshotID = _RestoreSnapshotID;
 IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERROR_FSNAPSHOT_SNAPSHOT_NOT_FOUND SnapshotID %', _RestoreSnapshotID;
+    RAISE EXCEPTION 'ERROR_POV_SNAPSHOT_NOT_FOUND SnapshotID %', _RestoreSnapshotID;
 END IF;
 
 -- Drop objects not part of the revision.
@@ -116,7 +116,7 @@ SET LOCAL search_path TO public;
 SELECT * INTO STRICT _SnapshotID, _RestoredRevisionID FROM pov();
 
 IF _RevisionID <> _RestoredRevisionID THEN
-    RAISE EXCEPTION 'ERROR_FSNAPSHOT_REVISION_DIFF RevisionID % RestoredRevisionID %', _RevisionID, _RestoredRevisionID;
+    RAISE EXCEPTION 'ERROR_POV_REVISION_DIFF RevisionID % RestoredRevisionID %', _RevisionID, _RestoredRevisionID;
 END IF;
 
 -- Return new _SnapshotID and the restored _RevisionID.

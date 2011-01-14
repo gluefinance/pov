@@ -4,7 +4,7 @@ _ObjectID text;
 _ObjectTypeContent text[];
 BEGIN
 IF _Content IS NULL THEN
-    RAISE EXCEPTION 'ERROR_FSNAPSHOT_OBJECT_CONTENT_IS_NULL';
+    RAISE EXCEPTION 'ERROR_POV_OBJECT_CONTENT_IS_NULL';
 END IF;
 
 -- Append the ObjectType to beginning of the Content
