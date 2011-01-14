@@ -18,7 +18,7 @@ _RevisionID := New_Revision();
 -- If unmodified, only update its heartbeat and return its SnapshotID.
 UPDATE Snapshots SET Heartbeat = now() WHERE Active = 1 AND RevisionID = _RevisionID RETURNING SnapshotID INTO _SnapshotID;
 IF FOUND THEN
-    SET LOCAL search_path TO DEFAULT;
+    SET LOCAL search_path TO public;
     RETURN;
 END IF;
 
@@ -29,7 +29,7 @@ UPDATE Snapshots SET Active = 0 WHERE Active = 1;
 INSERT INTO Snapshots (RevisionID) VALUES (_RevisionID) RETURNING SnapshotID INTO STRICT _SnapshotID;
 
 -- Return _SnapshotID and _RevisionID
-SET LOCAL search_path TO DEFAULT;
+SET LOCAL search_path TO public;
 RETURN;
 
 END;
@@ -87,13 +87,15 @@ IF NOT FOUND THEN
     RAISE EXCEPTION 'ERROR_POV_SNAPSHOT_NOT_FOUND SnapshotID %', _RestoreSnapshotID;
 END IF;
 
+SET LOCAL search_path TO public;
+
 -- Drop objects not part of the revision.
 _Num_Objects := array_upper(_CurrentObjectIDs,1);
 FOR _i IN 1.._Num_Objects
 LOOP
     _ObjectID := _CurrentObjectIDs[_Num_Objects-_i+1];
     IF NOT _ObjectID = ANY(_ObjectIDs) THEN
-        SELECT Content[_TYPE], Content[_DROP] INTO STRICT _ObjectType, _SQL FROM Objects WHERE ObjectID = _ObjectID;
+        SELECT Content[_TYPE], Content[_DROP] INTO STRICT _ObjectType, _SQL FROM pov.Objects WHERE ObjectID = _ObjectID;
         RAISE DEBUG E'\n-%\n%\n%', _ObjectID, '-    ' || _ObjectType, '-    ' || replace(_SQL,E'\n',E'\n-    ');
         EXECUTE _SQL;
     END IF;
@@ -105,13 +107,11 @@ FOR _i IN 1.._Num_Objects
 LOOP
     _ObjectID := _ObjectIDs[_i];
     IF NOT _ObjectID = ANY(_CurrentObjectIDs) THEN
-        SELECT Content[_TYPE], Content[_CREATE] INTO STRICT _ObjectType, _SQL FROM Objects WHERE ObjectID = _ObjectID;
+        SELECT Content[_TYPE], Content[_CREATE] INTO STRICT _ObjectType, _SQL FROM pov.Objects WHERE ObjectID = _ObjectID;
         RAISE DEBUG E'\n-%\n%\n%', _ObjectID, '+    ' || _ObjectType, '+    ' || replace(_SQL,E'\n',E'\n+    ');
         EXECUTE _SQL;
     END IF;
 END LOOP;
-
-SET LOCAL search_path TO public;
 
 SELECT * INTO STRICT _SnapshotID, _RestoredRevisionID FROM pov();
 
@@ -120,7 +120,7 @@ IF _RevisionID <> _RestoredRevisionID THEN
 END IF;
 
 -- Return new _SnapshotID and the restored _RevisionID.
-SET LOCAL search_path TO DEFAULT;
+SET LOCAL search_path TO public;
 RETURN;
 END;
 $BODY$ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
