@@ -103,7 +103,7 @@ END LOOP;
 _Num_Objects := array_upper(_ObjectIDs,1);
 FOR _i IN 1.._Num_Objects
 LOOP
-    _ObjectID := _CurrentObjectIDs[_Num_Objects];
+    _ObjectID := _CurrentObjectIDs[_i];
     IF NOT _ObjectID = ANY(_CurrentObjectIDs) THEN
         SELECT Content[_TYPE], Content[_CREATE] INTO STRICT _ObjectType, _SQL FROM Objects WHERE ObjectID = _ObjectID;
         RAISE DEBUG E'\n-%\n%\n%', _ObjectID, '+    ' || _ObjectType, '+    ' || replace(_SQL,E'\n',E'\n+    ');
