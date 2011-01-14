@@ -92,7 +92,7 @@ _Num_Objects := array_upper(_CurrentObjectIDs,1);
 FOR _i IN 1.._Num_Objects
 LOOP
     _ObjectID := _CurrentObjectIDs[_Num_Objects-_i+1];
-    IF NOT _ObjectID <@ _ObjectIDs THEN
+    IF NOT _ObjectID = ANY(_ObjectIDs) THEN
         SELECT Content[_TYPE], Content[_DROP] INTO STRICT _ObjectType, _SQL FROM Objects WHERE ObjectID = _ObjectID;
         RAISE DEBUG E'\n-%\n%\n%', _ObjectID, '-    ' || _ObjectType, '-    ' || replace(_SQL,E'\n',E'\n-    ');
         -- EXECUTE _SQL;
@@ -104,7 +104,7 @@ _Num_Objects := array_upper(_ObjectIDs,1);
 FOR _i IN 1.._Num_Objects
 LOOP
     _ObjectID := _CurrentObjectIDs[_Num_Objects];
-    IF NOT _ObjectID <@ _CurrentObjectIDs THEN
+    IF NOT _ObjectID = ANY(_CurrentObjectIDs) THEN
         SELECT Content[_TYPE], Content[_CREATE] INTO STRICT _ObjectType, _SQL FROM Objects WHERE ObjectID = _ObjectID;
         RAISE DEBUG E'\n-%\n%\n%', _ObjectID, '+    ' || _ObjectType, '+    ' || replace(_SQL,E'\n',E'\n+    ');
         -- EXECUTE _SQL;
