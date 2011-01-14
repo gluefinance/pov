@@ -28,7 +28,7 @@ SELECT
         'ALTER TABLE ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.relation_name || ' ADD CONSTRAINT ' || pov.pg_all_objects_unique_columns.constraint_name || ' ' || pg_catalog.pg_get_constraintdef(pov.pg_all_objects_unique_columns.objid)
 
         WHEN pov.pg_all_objects_unique_columns.class_name = 'pg_attrdef' THEN
-        'ALTER TABLE ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.relation_name || ' ALTER COLUMN ' || pov.pg_all_objects_unique_columns.attribute_name || ' ADD DEFAULT ' || (SELECT pg_catalog.pg_attrdef.adsrc FROM pg_catalog.pg_attrdef WHERE pg_catalog.pg_attrdef.oid = pov.pg_all_objects_unique_columns.objid)
+        'ALTER TABLE ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.relation_name || ' ALTER COLUMN ' || pov.pg_all_objects_unique_columns.attribute_name || ' SET DEFAULT ' || (SELECT pg_catalog.pg_attrdef.adsrc FROM pg_catalog.pg_attrdef WHERE pg_catalog.pg_attrdef.oid = pov.pg_all_objects_unique_columns.objid)
 
         WHEN pov.pg_all_objects_unique_columns.class_name = 'pg_trigger' THEN
         pg_get_triggerdef(pov.pg_all_objects_unique_columns.objid)
