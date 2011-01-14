@@ -95,7 +95,7 @@ LOOP
     IF NOT _ObjectID = ANY(_ObjectIDs) THEN
         SELECT Content[_TYPE], Content[_DROP] INTO STRICT _ObjectType, _SQL FROM Objects WHERE ObjectID = _ObjectID;
         RAISE DEBUG E'\n-%\n%\n%', _ObjectID, '-    ' || _ObjectType, '-    ' || replace(_SQL,E'\n',E'\n-    ');
-        -- EXECUTE _SQL;
+        EXECUTE _SQL;
     END IF;
 END LOOP;
 
@@ -107,7 +107,7 @@ LOOP
     IF NOT _ObjectID = ANY(_CurrentObjectIDs) THEN
         SELECT Content[_TYPE], Content[_CREATE] INTO STRICT _ObjectType, _SQL FROM Objects WHERE ObjectID = _ObjectID;
         RAISE DEBUG E'\n-%\n%\n%', _ObjectID, '+    ' || _ObjectType, '+    ' || replace(_SQL,E'\n',E'\n+    ');
-        -- EXECUTE _SQL;
+        EXECUTE _SQL;
     END IF;
 END LOOP;
 
