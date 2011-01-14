@@ -43,6 +43,8 @@ SET LOCAL search_path TO pov;
 \i sql/schema/pov/functions/_format_type.sql
 \i sql/schema/pov/functions/tsort.pl
 \i sql/schema/pov/functions/pg_get_object_unique_columns.sql
+\i sql/schema/pov/functions/pg_get_aggregate_create_def.sql
+\i sql/schema/pov/functions/pg_get_aggregate_drop_def.sql
 
 -- Internal views
 \i sql/schema/pov/views/pg_all_objects_unique_columns.sql
@@ -51,8 +53,6 @@ SET LOCAL search_path TO pov;
 \i sql/schema/pov/views/pg_depend_dot.sql
 \i sql/schema/pov/views/pg_depend_tsort.sql
 \i sql/schema/pov/views/pg_depend_definitions.sql
-\i sql/schema/pov/views/pg_get_aggregate_create_def.sql
-\i sql/schema/pov/views/pg_get_aggregate_drop_def.sql
 
 SET LOCAL search_path TO public;
 
