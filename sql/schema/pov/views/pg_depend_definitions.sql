@@ -34,8 +34,14 @@ SELECT
         pg_get_triggerdef(pov.pg_all_objects_unique_columns.objid)
 
         WHEN pov.pg_all_objects_unique_columns.class_name = 'pg_proc' THEN
-        pg_catalog.pg_get_functiondef(pov.pg_all_objects_unique_columns.objid) || ';' ||
-        'ALTER FUNCTION ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.function_name || '(' || pg_catalog.pg_get_function_identity_arguments(pov.pg_all_objects_unique_columns.objid) || ') OWNER TO ' || pg_catalog.pg_get_userbyid((SELECT pg_catalog.pg_proc.proowner FROM pg_catalog.pg_proc WHERE pg_catalog.pg_proc.oid = pov.pg_all_objects_unique_columns.objid))
+        CASE
+            WHEN pov.pg_get_aggregate_create_def(pov.pg_all_objects_unique_columns.objid) IS NOT NULL
+            THEN pov.pg_get_aggregate_create_def(pov.pg_all_objects_unique_columns.objid) || ';' ||
+            'ALTER AGGREGATE ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.function_name || '(' || pg_catalog.pg_get_function_identity_arguments(pov.pg_all_objects_unique_columns.objid) || ') OWNER TO ' || pg_catalog.pg_get_userbyid((SELECT pg_catalog.pg_proc.proowner FROM pg_catalog.pg_proc WHERE pg_catalog.pg_proc.oid = pov.pg_all_objects_unique_columns.objid))
+            ELSE
+            pg_catalog.pg_get_functiondef(pov.pg_all_objects_unique_columns.objid) || ';' ||
+            'ALTER FUNCTION ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.function_name || '(' || pg_catalog.pg_get_function_identity_arguments(pov.pg_all_objects_unique_columns.objid) || ') OWNER TO ' || pg_catalog.pg_get_userbyid((SELECT pg_catalog.pg_proc.proowner FROM pg_catalog.pg_proc WHERE pg_catalog.pg_proc.oid = pov.pg_all_objects_unique_columns.objid))
+        END
 
     END AS create_definition,
 
@@ -63,8 +69,12 @@ SELECT
         'DROP TRIGGER ' || pov.pg_all_objects_unique_columns.trigger_name || ' ON TABLE ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.relation_name
 
         WHEN pov.pg_all_objects_unique_columns.class_name = 'pg_proc' THEN
-        'DROP FUNCTION ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.function_name || '(' || pg_catalog.pg_get_function_identity_arguments(pov.pg_all_objects_unique_columns.objid) || ')'
-
+        CASE
+            WHEN pov.pg_get_aggregate_drop_def(pov.pg_all_objects_unique_columns.objid) IS NOT NULL
+            THEN pov.pg_get_aggregate_drop_def(pov.pg_all_objects_unique_columns.objid)
+            ELSE
+            'DROP FUNCTION ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.function_name || '(' || pg_catalog.pg_get_function_identity_arguments(pov.pg_all_objects_unique_columns.objid) || ')'
+        END
     END AS drop_definition
 
 FROM pov.pg_all_objects_unique_columns, pov.pg_depend_tsort

@@ -51,6 +51,8 @@ SET LOCAL search_path TO pov;
 \i sql/schema/pov/views/pg_depend_dot.sql
 \i sql/schema/pov/views/pg_depend_tsort.sql
 \i sql/schema/pov/views/pg_depend_definitions.sql
+\i sql/schema/pov/views/pg_get_aggregate_create_def.sql
+\i sql/schema/pov/views/pg_get_aggregate_drop_def.sql
 
 SET LOCAL search_path TO public;
 
