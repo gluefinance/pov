@@ -2,7 +2,8 @@ pov - PostgreSQL Object Version control system
 
 DESCRIPTION
 
-Take a snapshot or rollback all stored procedures in a PostgreSQL database.
+Take a snapshot or rollback all "non-data" objects in a PostgreSQL database.
+Without losing any of your data, you can travel in time and restore the state of any snapshot taken.
 
 
 
