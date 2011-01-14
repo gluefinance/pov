@@ -951,7 +951,7 @@ SELECT
 'pg_database'::regclass::text AS class_name,
 'pg_database'::regclass::oid  AS classid,
 pg_database.oid               AS objid,
-0                  AS objsubid,
+0                             AS objsubid,
 NULL,
 NULL,
 NULL,
@@ -991,7 +991,48 @@ SELECT
 'pg_class'::regclass::text AS class_name,
 'pg_class'::regclass::oid  AS classid,
 pg_class.oid               AS objid,
-COALESCE(pg_attribute.attnum,0) AS objsubid,
+0                          AS objsubid,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+pg_class.relname,
+CASE pg_class.relkind WHEN 'c' THEN 'composite type' WHEN 'i' THEN 'index' WHEN 'r' THEN 'table' WHEN 't' THEN 'toast table' WHEN 'v' THEN 'view' WHEN 'S' THEN 'sequence' END::text,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+pg_namespace.nspname,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL
+FROM pg_class
+JOIN pg_namespace ON (pg_namespace.oid      = pg_class.relnamespace)
+UNION ALL
+SELECT
+'pg_class'::regclass::text AS class_name,
+'pg_class'::regclass::oid  AS classid,
+pg_class.oid               AS objid,
+pg_attribute.attnum        AS objsubid,
 NULL,
 NULL,
 NULL,
@@ -1026,8 +1067,8 @@ NULL,
 NULL,
 NULL
 FROM pg_class
-JOIN pg_namespace      ON (pg_namespace.oid      = pg_class.relnamespace)
-LEFT JOIN pg_attribute ON (pg_attribute.attrelid = pg_class.oid)
+JOIN pg_namespace ON (pg_namespace.oid      = pg_class.relnamespace)
+JOIN pg_attribute ON (pg_attribute.attrelid = pg_class.oid)
 UNION ALL
 SELECT
 'pg_attrdef'::regclass::text AS class_name,
