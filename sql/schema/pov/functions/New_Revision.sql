@@ -15,9 +15,9 @@ SELECT Set_Revision(ObjectIDs) INTO STRICT _RevisionID FROM (
     FROM (
         -- Create new ObjectID for each function.
         -- If a object already exists with the same content (function definition), its ObjectID will be selected.
-        SELECT Set_Object(ARRAY[CreateObject,DropObject],'function')   AS ObjectID FROM View_Functions   UNION
-        SELECT Set_Object(ARRAY[CreateObject,DropObject],'constraint') AS ObjectID FROM View_Constraints UNION
-        SELECT Set_Object(ARRAY[CreateObject,DropObject],'view')       AS ObjectID FROM View_Views
+        SELECT Set_Object(ARRAY[create_definition,drop_definition],description) AS ObjectID FROM pov.pg_depend_definitions
+        WHERE create_definition IS NOT NULL AND drop_definition IS NOT NULL
+        ORDER BY row_number
     ) AS Objects
 ) AS Revision;
 

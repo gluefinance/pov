@@ -25,7 +25,7 @@ END IF;
 -- Deactivate existing pov, if any. (might affect 0 rows, it's not a bug we lack IF NOT FOUND here)
 UPDATE Snapshots SET Active = 0 WHERE Active = 1;
 
--- Create a new FSnapshotID. The RevisionID might be identical to a previous pov.
+-- Create a new SnapshotID. The RevisionID might be identical to a previous pov.
 INSERT INTO Snapshots (RevisionID) VALUES (_RevisionID) RETURNING SnapshotID INTO STRICT _SnapshotID;
 
 -- Return _SnapshotID and _RevisionID
@@ -50,14 +50,18 @@ _ObjectIDs text[];
 _FunctionID oid;
 _ObjectID text;
 _SQL text;
+_ObjectType text;
 
 _CurrentSnapshotID bigint;
 _CurrentRevisionID text;
 _CurrentObjectIDs text[];
 
 _RestoredRevisionID text;
+_TYPE integer   := 1;
 _CREATE integer := 2;
 _DROP integer   := 3;
+_i integer;
+_Num_Objects integer;
 BEGIN
 
 -- Disable check_function_bodies to allow creation of sql functions depending on not-yet-created functions,
@@ -75,44 +79,36 @@ IF NOT FOUND THEN
     RAISE EXCEPTION 'ERROR_FSNAPSHOT_REVISION_NOT_FOUND RevisionID %', _CurrentRevisionID;
 END IF;
 
--- Lookup RevisionID and ObjectIDs for FSnapshotID to restore
+-- Lookup RevisionID and ObjectIDs for SnapshotID to restore
 SELECT Snapshots.RevisionID, Revisions.ObjectIDs INTO _RevisionID, _ObjectIDs FROM Snapshots
 INNER JOIN Revisions ON (Revisions.RevisionID = Snapshots.RevisionID)
 WHERE Snapshots.SnapshotID = _RestoreSnapshotID;
 IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERROR_FSNAPSHOT_SNAPSHOT_NOT_FOUND FSnapshotID %', _RestoreSnapshotID;
+    RAISE EXCEPTION 'ERROR_FSNAPSHOT_SNAPSHOT_NOT_FOUND SnapshotID %', _RestoreSnapshotID;
 END IF;
 
 -- Drop objects not part of the revision.
-FOR _ObjectID IN
-SELECT DropObjects.ObjectID FROM (
-    SELECT unnest AS ObjectID FROM unnest(_CurrentObjectIDs)
-    EXCEPT
-    SELECT unnest AS ObjectID FROM unnest(_ObjectIDs)
-) AS DropObjects
-INNER JOIN Objects     ON (Objects.ObjectID = DropObjects.ObjectID)
-INNER JOIN ObjectTypes ON (ObjectTypes.Name = Objects.Content[1])
-ORDER BY ObjectTypes.ObjectTypeID DESC
+_Num_Objects := array_upper(_CurrentObjectIDs,1);
+FOR _i IN 1.._Num_Objects
 LOOP
-    SELECT Content[_DROP] INTO STRICT _SQL FROM Objects WHERE ObjectID = _ObjectID;
-    RAISE DEBUG E'\n-%\n%', _ObjectID, '-    ' || replace(_SQL,E'\n',E'\n-    ');
-    EXECUTE _SQL;
+    _ObjectID := _CurrentObjectIDs[_Num_Objects-_i+1];
+    IF NOT _ObjectID <@ _ObjectIDs THEN
+        SELECT Content[_TYPE], Content[_DROP] INTO STRICT _ObjectType, _SQL FROM Objects WHERE ObjectID = _ObjectID;
+        RAISE DEBUG E'\n-%\n%\n%', _ObjectID, '-    ' || _ObjectType, '-    ' || replace(_SQL,E'\n',E'\n-    ');
+        -- EXECUTE _SQL;
+    END IF;
 END LOOP;
 
--- Create objects not in the current revision.
-FOR _ObjectID IN
-SELECT CreateObjects.ObjectID FROM (
-    SELECT unnest AS ObjectID FROM unnest(_ObjectIDs)
-    EXCEPT
-    SELECT unnest AS ObjectID FROM unnest(_CurrentObjectIDs)
-) AS CreateObjects
-INNER JOIN Objects     ON (Objects.ObjectID = CreateObjects.ObjectID)
-INNER JOIN ObjectTypes ON (ObjectTypes.Name = Objects.Content[1])
-ORDER BY ObjectTypes.ObjectTypeID ASC
+-- Create unpresent objects part of the revision.
+_Num_Objects := array_upper(_ObjectIDs,1);
+FOR _i IN 1.._Num_Objects
 LOOP
-    SELECT Content[_CREATE] INTO STRICT _SQL FROM Objects WHERE ObjectID = _ObjectID;
-    RAISE DEBUG E'\n+%\n%', _ObjectID, '+    ' || replace(_SQL,E'\n',E'\n+    ');
-    EXECUTE _SQL;
+    _ObjectID := _CurrentObjectIDs[_Num_Objects];
+    IF NOT _ObjectID <@ _CurrentObjectIDs THEN
+        SELECT Content[_TYPE], Content[_CREATE] INTO STRICT _ObjectType, _SQL FROM Objects WHERE ObjectID = _ObjectID;
+        RAISE DEBUG E'\n-%\n%\n%', _ObjectID, '+    ' || _ObjectType, '+    ' || replace(_SQL,E'\n',E'\n+    ');
+        -- EXECUTE _SQL;
+    END IF;
 END LOOP;
 
 SET LOCAL search_path TO public;
