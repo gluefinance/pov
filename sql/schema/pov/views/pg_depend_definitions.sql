@@ -37,8 +37,6 @@ SELECT
         pg_catalog.pg_get_functiondef(pov.pg_all_objects_unique_columns.objid) || ';' ||
         'ALTER FUNCTION ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.function_name || '(' || pg_catalog.pg_get_function_identity_arguments(pov.pg_all_objects_unique_columns.objid) || ') OWNER TO ' || pg_catalog.pg_get_userbyid((SELECT pg_catalog.pg_proc.proowner FROM pg_catalog.pg_proc WHERE pg_catalog.pg_proc.oid = pov.pg_all_objects_unique_columns.objid))
 
-        ELSE 'RAISE EXCEPTION ''Sorry, ' || pov.pg_all_objects_unique_columns.class_name || ' is not supported yet'''
-
     END AS create_definition,
 
     CASE
@@ -66,8 +64,6 @@ SELECT
 
         WHEN pov.pg_all_objects_unique_columns.class_name = 'pg_proc' THEN
         'DROP FUNCTION ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.function_name || '(' || pg_catalog.pg_get_function_identity_arguments(pov.pg_all_objects_unique_columns.objid) || ')'
-
-        ELSE 'RAISE EXCEPTION ''Sorry, ' || pov.pg_all_objects_unique_columns.class_name || ' is not supported yet'''
 
     END AS drop_definition
 
