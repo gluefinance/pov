@@ -15,6 +15,5 @@ SET LOCAL search_path TO pov;
 \i sql/schema/pov/functions/Set_Object.sql
 \i sql/schema/pov/functions/Set_Revision.sql
 \i sql/schema/pov/functions/Hash.sql
-\i sql/schema/pov/functions/Sort_Array.sql
 
 COMMIT;

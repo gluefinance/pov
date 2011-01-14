@@ -39,7 +39,6 @@ SET LOCAL search_path TO pov;
 \i sql/schema/pov/functions/Set_Object.sql
 \i sql/schema/pov/functions/Set_Revision.sql
 \i sql/schema/pov/functions/Hash.sql
-\i sql/schema/pov/functions/Sort_Array.sql
 \i sql/schema/pov/functions/_format_type.sql
 \i sql/schema/pov/functions/tsort.pl
 \i sql/schema/pov/functions/pg_get_object_unique_columns.sql
