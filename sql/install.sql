@@ -11,6 +11,7 @@ CREATE SCHEMA AUTHORIZATION pov;
 
 -- Create plpgsql language, you will get an error if it already exists, which is safe to ignore.
 CREATE LANGUAGE plpgsql;
+CREATE LANGUAGE plperl;
 
 SET ROLE TO pov;
 
