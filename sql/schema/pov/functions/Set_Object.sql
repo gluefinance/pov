@@ -17,7 +17,6 @@ IF FOUND THEN
     RETURN _ObjectID;
 END IF;
 INSERT INTO Objects (ObjectID,Content) VALUES (_ObjectID,_ObjectTypeContent) RETURNING ObjectID INTO STRICT _ObjectID;
-RAISE DEBUG 'Inserted object % %', _ObjectID, _ObjectType;
 RETURN _ObjectID;
 END;
 $BODY$ LANGUAGE plpgsql VOLATILE;
