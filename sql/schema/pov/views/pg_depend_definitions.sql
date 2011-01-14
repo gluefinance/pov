@@ -66,7 +66,7 @@ SELECT
         'DROP VIEW ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.relation_name
 
         WHEN pov.pg_all_objects_unique_columns.class_name = 'pg_trigger' THEN
-        'DROP TRIGGER ' || pov.pg_all_objects_unique_columns.trigger_name || ' ON TABLE ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.relation_name
+        'DROP TRIGGER ' || pov.pg_all_objects_unique_columns.trigger_name || ' ON ' || pov.pg_all_objects_unique_columns.namespace_name || '.' || pov.pg_all_objects_unique_columns.relation_name
 
         WHEN pov.pg_all_objects_unique_columns.class_name = 'pg_proc' THEN
         CASE
