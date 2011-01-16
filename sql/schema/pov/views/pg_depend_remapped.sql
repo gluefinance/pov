@@ -34,21 +34,21 @@ CREATE OR REPLACE VIEW pov.pg_depend_remapped AS
 WITH RECURSIVE
 edges AS (
 SELECT
-    refclassid || '.' || refobjid || '.' || refobjsubid AS from_obj,
-    classid || '.' || objid || '.' || objsubid AS to_obj,
+    ARRAY[refclassid::int, refobjid::int, refobjsubid] AS from_obj,
+    ARRAY[classid::int, objid::int, objsubid] AS to_obj,
     deptype
 FROM pg_catalog.pg_depend
 UNION
 -- Add dependencies from "main object" (objsubid=0) to sub object (objsubid>0):
 SELECT
-    refclassid || '.' || refobjid || '.' || 0 AS from_obj,
-    refclassid || '.' || refobjid || '.' || refobjsubid AS to_obj,
+    ARRAY[refclassid::int, refobjid::int, 0] AS from_obj,
+    ARRAY[refclassid::int, refobjid::int, refobjsubid] AS to_obj,
     deptype
 FROM pg_catalog.pg_depend WHERE refobjsubid > 0
 UNION
 SELECT
-    classid || '.' || objid || '.' || 0 AS from_obj,
-    classid || '.' || objid || '.' || objsubid AS to_obj,
+    ARRAY[classid::int, objid::int, 0] AS from_obj,
+    ARRAY[classid::int, objid::int, objsubid] AS to_obj,
     deptype
 FROM pg_catalog.pg_depend WHERE objsubid > 0
 ),
@@ -78,32 +78,24 @@ SELECT
 FROM find_internal_recursively
 JOIN edges ON (edges.deptype = 'i' AND edges.from_obj = find_internal_recursively.internal_obj)
 ),
-map_internal_to_normal AS (
-SELECT
-    normal_obj,
-    array_agg(internal_obj) AS internal_objs
-FROM find_internal_recursively
-WHERE normal_obj <> internal_obj
-GROUP BY normal_obj
-),
 remap_edges AS (
 SELECT
 COALESCE(remap_from.normal_obj,edges.from_obj) AS from_obj,
 COALESCE(remap_to.normal_obj,edges.to_obj) AS to_obj,
 edges.deptype
 FROM edges
-LEFT JOIN map_internal_to_normal AS remap_from ON (edges.from_obj = ANY(remap_from.internal_objs))
-LEFT JOIN map_internal_to_normal AS remap_to   ON (edges.to_obj   = ANY(remap_to.internal_objs))
+LEFT JOIN find_internal_recursively AS remap_from ON (edges.from_obj = remap_from.internal_obj)
+LEFT JOIN find_internal_recursively AS remap_to   ON (edges.to_obj   = remap_to.internal_obj)
 WHERE edges.deptype IN ('n','a')
 ),
 unconcat AS (
 SELECT
-    split_part(from_obj,'.',1)::oid AS refclassid,
-    split_part(from_obj,'.',2)::oid AS refobjid,
-    split_part(from_obj,'.',3)::integer AS refobjsubid,
-    split_part(to_obj,'.',1)::oid AS classid,
-    split_part(to_obj,'.',2)::oid AS objid,
-    split_part(to_obj,'.',3)::integer AS objsubid,
+    from_obj[1]::oid AS refclassid,
+    from_obj[2]::oid AS refobjid,
+    from_obj[3]::integer AS refobjsubid,
+    to_obj[1]::oid AS classid,
+    to_obj[2]::oid AS objid,
+    to_obj[3]::integer AS objsubid,
     deptype
 FROM remap_edges
 )
