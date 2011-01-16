@@ -22,7 +22,7 @@ SET LOCAL search_path TO public;
 -- API functions
 \i sql/schema/public/functions/pov.sql
 
-SET LOCAL search_path TO pov;
+SET LOCAL search_path TO pov, public;
 -- Tables
 \i sql/schema/pov/tables/ObjectTypes.sql
 \i sql/schema/pov/tables/Objects.sql
