@@ -1,7 +1,7 @@
 -- SQL version of the pg_catalog.pg_describe_object function,
 -- for those of us not running PostgreSQL 9.
 --
-CREATE OR REPLACE FUNCTION public.pg_describe_object(oid, oid, integer) RETURNS TEXT AS $BODY$
+CREATE OR REPLACE FUNCTION pg_catalog.pg_describe_object(oid, oid, integer) RETURNS TEXT AS $BODY$
 WITH
 object             AS (SELECT $1::oid AS classoid, $2::oid AS objoid, $3::integer AS objsubid),
 cols AS (
